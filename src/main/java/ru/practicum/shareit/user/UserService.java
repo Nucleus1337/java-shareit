@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.exception.CustomException;
 import ru.practicum.shareit.user.dto.UserRequestDto;
@@ -12,11 +13,13 @@ import ru.practicum.shareit.user.storage.UserStorage;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class UserService {
   private final UserMapper userMapper;
   private final UserStorage userStorage;
 
   private void checkEmail(String newEmail) {
+    log.info("Проверяем строку email: {}", newEmail);
     if (newEmail == null) {
       throw new CustomException.EmailException("Не задан email");
     }
@@ -34,6 +37,7 @@ public class UserService {
   }
 
   public UserResponseDto create(UserRequestDto userRequest) {
+    log.info("Создаем нового пользователяя {}", userRequest);
     checkEmail(userRequest.getEmail());
 
     User user = userStorage.insert(userMapper.toModel(userRequest));
@@ -42,6 +46,7 @@ public class UserService {
   }
 
   public UserResponseDto update(UserRequestDto userRequest, Integer id) {
+    log.info("Обновляем пользователя с id = {}", id);
     User user = userStorage.findById(id);
     String name = userRequest.getName();
     String email = userRequest.getEmail();
@@ -65,6 +70,7 @@ public class UserService {
   }
 
   public void removeById(Integer id) {
+    log.info("Удаляем пользователя с id = {}", id);
     userStorage.delete(id);
   }
 

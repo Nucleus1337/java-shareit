@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ReflectionUtils;
 import ru.practicum.shareit.exception.CustomException;
@@ -16,12 +17,14 @@ import ru.practicum.shareit.user.storage.UserStorage;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ItemService {
   private final ItemStorage itemStorage;
   private final ItemMapper itemMapper;
   private final UserStorage userStorage;
 
   private User findUser(Integer userId) {
+    log.info("Найдем пользователя с id = {}", userId);
     User user = userStorage.findById(userId);
     if (user == null) {
       throw new CustomException.UserNotFoundException("Пользователь не найден");
@@ -30,6 +33,7 @@ public class ItemService {
   }
 
   private Item findItem(Integer itemId) {
+    log.info("Найдем вещь с id = {}", itemId);
     Item item = itemStorage.findById(itemId);
     if (item == null) {
       throw new CustomException.ItemException("Вещь не найдена");
@@ -38,6 +42,7 @@ public class ItemService {
   }
 
   public ItemDto create(Integer userId, ItemDto itemDto) {
+    log.info("Создадим новую вещь: {}; для пользователя с id = {}", itemDto, userId);
     User user = findUser(userId);
     Item item = itemMapper.toModel(itemDto, user);
 
@@ -45,6 +50,7 @@ public class ItemService {
   }
 
   public ItemDto updateFields(Integer userId, Integer itemId, Map<String, Object> fields) {
+    log.info("Обновим вещь с id = {} у пользователя с id = {}", userId, itemId);
     User user = findUser(userId);
     Item item = findItem(itemId);
 
@@ -67,10 +73,12 @@ public class ItemService {
   }
 
   public ItemDto findById(Integer itemId) {
+    log.info("Найдем вещь с id = {}", itemId);
     return itemMapper.toDto(findItem(itemId));
   }
 
   public List<ItemDto> findAllByUserId(Integer userId) {
+    log.info("Найдем все вещи пользователя с id = {}", userId);
     List<ItemDto> itemsDto = new ArrayList<>();
     itemStorage.findAll().stream()
         .filter(item -> item.getOwner().getId().equals(userId))
@@ -79,11 +87,14 @@ public class ItemService {
               itemsDto.add(itemMapper.toDto(item));
             });
 
+    log.info("Всего найдено вещей: {}", itemsDto.size());
     return itemsDto;
   }
 
   public List<ItemDto> search(String text) {
+    log.info("Найдем все вещи по строке запроса: {}", text);
     if (text.isEmpty() || text.isBlank()) {
+      log.error("Пустой запрос поиска");
       return new ArrayList<>();
     }
 
@@ -105,6 +116,7 @@ public class ItemService {
               itemsDto.add(itemMapper.toDto(item));
             });
 
+    log.info("Всего найдено вещей: {}", itemsDto.size());
     return itemsDto;
   }
 }
