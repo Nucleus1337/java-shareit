@@ -24,25 +24,25 @@ public class ItemController {
 
   @PostMapping
   public ItemDto create(
-      @RequestHeader("X-Sharer-User-Id") Integer userId, @RequestBody @Valid ItemDto itemDto) {
+      @RequestHeader("X-Sharer-User-Id") Long userId, @RequestBody @Valid ItemDto itemDto) {
     return itemService.create(userId, itemDto);
   }
 
   @PatchMapping("/{id}")
   public ItemDto updateFields(
-      @RequestHeader("X-Sharer-User-Id") Integer userId,
-      @PathVariable Integer id,
+      @RequestHeader("X-Sharer-User-Id") Long userId,
+      @PathVariable Long id,
       @RequestBody Map<String, Object> fields) {
     return itemService.updateFields(userId, id, fields);
   }
 
   @GetMapping("/{id}")
-  public ItemDto findItemById(@PathVariable Integer id) {
+  public ItemDto findItemById(@PathVariable Long id) {
     return itemService.findById(id);
   }
 
   @GetMapping
-  public List<ItemDto> findAllByUserId(@RequestHeader("X-Sharer-User-Id") Integer userId) {
+  public List<ItemDto> findAllByUserId(@RequestHeader("X-Sharer-User-Id") Long userId) {
     return itemService.findAllByUserId(userId);
   }
 

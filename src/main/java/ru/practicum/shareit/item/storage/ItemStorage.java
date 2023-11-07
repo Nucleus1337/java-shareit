@@ -8,9 +8,9 @@ public interface ItemStorage {
 
   Item update(Item item);
 
-  void delete(Integer id);
+  void delete(Long id);
 
-  Item findById(Integer id);
+  Item findById(Long id);
 
   List<Item> findAll();
 }

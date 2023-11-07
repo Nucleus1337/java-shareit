@@ -20,10 +20,9 @@ import ru.practicum.shareit.user.storage.UserStorage;
 @Slf4j
 public class ItemService {
   private final ItemStorage itemStorage;
-  private final ItemMapper itemMapper;
   private final UserStorage userStorage;
 
-  private User findUser(Integer userId) {
+  private User findUser(Long userId) {
     log.info("Найдем пользователя с id = {}", userId);
     User user = userStorage.findById(userId);
     if (user == null) {
@@ -32,7 +31,7 @@ public class ItemService {
     return user;
   }
 
-  private Item findItem(Integer itemId) {
+  private Item findItem(Long itemId) {
     log.info("Найдем вещь с id = {}", itemId);
     Item item = itemStorage.findById(itemId);
     if (item == null) {
@@ -41,15 +40,15 @@ public class ItemService {
     return item;
   }
 
-  public ItemDto create(Integer userId, ItemDto itemDto) {
+  public ItemDto create(Long userId, ItemDto itemDto) {
     log.info("Создадим новую вещь: {}; для пользователя с id = {}", itemDto, userId);
     User user = findUser(userId);
-    Item item = itemMapper.toModel(itemDto, user);
+    Item item = ItemMapper.toModel(itemDto, user);
 
-    return itemMapper.toDto(itemStorage.insert(item));
+    return ItemMapper.toDto(itemStorage.insert(item));
   }
 
-  public ItemDto updateFields(Integer userId, Integer itemId, Map<String, Object> fields) {
+  public ItemDto updateFields(Long userId, Long itemId, Map<String, Object> fields) {
     log.info("Обновим вещь с id = {} у пользователя с id = {}", userId, itemId);
     User user = findUser(userId);
     Item item = findItem(itemId);
@@ -64,28 +63,26 @@ public class ItemService {
           Field field = ReflectionUtils.findField(Item.class, key);
           if (field != null) {
             field.setAccessible(true);
-            ReflectionUtils.setField(field, item, value);
+            ReflectionUtils.setField(
+                field, item, value instanceof Integer ? ((Integer) value).longValue() : value);
           }
         });
 
     itemStorage.update(item);
-    return itemMapper.toDto(item);
+    return ItemMapper.toDto(item);
   }
 
-  public ItemDto findById(Integer itemId) {
+  public ItemDto findById(Long itemId) {
     log.info("Найдем вещь с id = {}", itemId);
-    return itemMapper.toDto(findItem(itemId));
+    return ItemMapper.toDto(findItem(itemId));
   }
 
-  public List<ItemDto> findAllByUserId(Integer userId) {
+  public List<ItemDto> findAllByUserId(Long userId) {
     log.info("Найдем все вещи пользователя с id = {}", userId);
     List<ItemDto> itemsDto = new ArrayList<>();
     itemStorage.findAll().stream()
         .filter(item -> item.getOwner().getId().equals(userId))
-        .forEach(
-            item -> {
-              itemsDto.add(itemMapper.toDto(item));
-            });
+        .forEach(item -> itemsDto.add(ItemMapper.toDto(item)));
 
     log.info("Всего найдено вещей: {}", itemsDto.size());
     return itemsDto;
@@ -103,18 +100,13 @@ public class ItemService {
     itemStorage.findAll().stream()
         .filter(
             item ->
-                (item.getName().replaceAll(" ", "").toLowerCase().split(modifiedText).length > 1
+                (item.getAvailable()
+                    && (item.getName().replaceAll(" ", "").toLowerCase().contains(modifiedText)
                         || item.getDescription()
-                                .replaceAll(" ", "")
-                                .toLowerCase()
-                                .split(modifiedText)
-                                .length
-                            > 1)
-                    && item.getAvailable() == Boolean.TRUE)
-        .forEach(
-            item -> {
-              itemsDto.add(itemMapper.toDto(item));
-            });
+                            .replaceAll(" ", "")
+                            .toLowerCase()
+                            .contains(modifiedText))))
+        .forEach(item -> itemsDto.add(ItemMapper.toDto(item)));
 
     log.info("Всего найдено вещей: {}", itemsDto.size());
     return itemsDto;

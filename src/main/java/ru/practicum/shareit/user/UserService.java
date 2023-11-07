@@ -7,15 +7,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.exception.CustomException;
-import ru.practicum.shareit.user.dto.UserRequestDto;
-import ru.practicum.shareit.user.dto.UserResponseDto;
+import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.storage.UserStorage;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class UserService {
-  private final UserMapper userMapper;
   private final UserStorage userStorage;
 
   private void checkEmail(String newEmail) {
@@ -36,16 +34,16 @@ public class UserService {
     }
   }
 
-  public UserResponseDto create(UserRequestDto userRequest) {
-    log.info("Создаем нового пользователяя {}", userRequest);
-    checkEmail(userRequest.getEmail());
+  public UserDto create(UserDto userDto) {
+    log.info("Создаем нового пользователяя {}", userDto);
+    checkEmail(userDto.getEmail());
 
-    User user = userStorage.insert(userMapper.toModel(userRequest));
+    User user = userStorage.insert(UserMapper.toModel(userDto));
 
-    return userMapper.toResponseDto(user);
+    return UserMapper.toDto(user);
   }
 
-  public UserResponseDto update(UserRequestDto userRequest, Integer id) {
+  public UserDto update(UserDto userRequest, Long id) {
     log.info("Обновляем пользователя с id = {}", id);
     User user = userStorage.findById(id);
     String name = userRequest.getName();
@@ -62,21 +60,19 @@ public class UserService {
       user.setEmail(email);
     }
 
-    return userMapper.toResponseDto(user);
+    return UserMapper.toDto(user);
   }
 
-  public UserResponseDto findById(Integer id) {
-    return userMapper.toResponseDto(userStorage.findById(id));
+  public UserDto findById(Long id) {
+    return UserMapper.toDto(userStorage.findById(id));
   }
 
-  public void removeById(Integer id) {
+  public void removeById(Long id) {
     log.info("Удаляем пользователя с id = {}", id);
     userStorage.delete(id);
   }
 
-  public List<UserResponseDto> findAll() {
-    return userStorage.findAll().stream()
-        .map(userMapper::toResponseDto)
-        .collect(Collectors.toList());
+  public List<UserDto> findAll() {
+    return userStorage.findAll().stream().map(UserMapper::toDto).collect(Collectors.toList());
   }
 }

@@ -9,10 +9,10 @@ import ru.practicum.shareit.item.model.Item;
 
 @Component
 public class ItemInMemoryStorage implements ItemStorage {
-  private final Map<Integer, Item> idToItem = new HashMap<>();
-  private Integer id = 1;
+  private final Map<Long, Item> idToItem = new HashMap<>();
+  private Long id = 1L;
 
-  private Integer getNextId() {
+  private Long getNextId() {
     return id++;
   }
 
@@ -29,12 +29,12 @@ public class ItemInMemoryStorage implements ItemStorage {
   }
 
   @Override
-  public void delete(Integer id) {
+  public void delete(Long id) {
     idToItem.remove(id);
   }
 
   @Override
-  public Item findById(Integer id) {
+  public Item findById(Long id) {
     return idToItem.get(id);
   }
 
