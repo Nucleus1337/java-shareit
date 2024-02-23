@@ -2,42 +2,49 @@ package ru.practicum.shareit.item;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ReflectionUtils;
+import ru.practicum.shareit.booking.Booking;
+import ru.practicum.shareit.booking.BookingRepository;
+import ru.practicum.shareit.comment.Comment;
+import ru.practicum.shareit.comment.CommentMapper;
+import ru.practicum.shareit.comment.CommentRepository;
+import ru.practicum.shareit.comment.dto.CommentRequestDto;
+import ru.practicum.shareit.comment.dto.CommentResponseDto;
 import ru.practicum.shareit.exception.CustomException;
 import ru.practicum.shareit.item.dto.ItemDto;
+import ru.practicum.shareit.item.dto.ItemPlusResponseDto;
 import ru.practicum.shareit.item.model.Item;
-import ru.practicum.shareit.item.storage.ItemStorage;
 import ru.practicum.shareit.user.User;
-import ru.practicum.shareit.user.storage.UserStorage;
+import ru.practicum.shareit.user.UserRepository;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class ItemService {
-  private final ItemStorage itemStorage;
-  private final UserStorage userStorage;
+  private final UserRepository userRepository;
+  private final ItemRepository itemRepository;
+  private final BookingRepository bookingRepository;
+  private final CommentRepository commentRepository;
 
   private User findUser(Long userId) {
     log.info("Найдем пользователя с id = {}", userId);
-    User user = userStorage.findById(userId);
-    if (user == null) {
-      throw new CustomException.UserNotFoundException("Пользователь не найден");
-    }
-    return user;
+    return userRepository
+        .findById(userId)
+        .orElseThrow(() -> new CustomException.UserNotFoundException("Пользователь не существует"));
   }
 
   private Item findItem(Long itemId) {
     log.info("Найдем вещь с id = {}", itemId);
-    Item item = itemStorage.findById(itemId);
-    if (item == null) {
-      throw new CustomException.ItemException("Вещь не найдена");
-    }
-    return item;
+    return itemRepository
+        .findById(itemId)
+        .orElseThrow(() -> new CustomException.ItemNotFoundException("Вещь не найдена"));
   }
 
   public ItemDto create(Long userId, ItemDto itemDto) {
@@ -45,7 +52,7 @@ public class ItemService {
     User user = findUser(userId);
     Item item = ItemMapper.toModel(itemDto, user);
 
-    return ItemMapper.toDto(itemStorage.insert(item));
+    return ItemMapper.toDto(itemRepository.saveAndFlush(item));
   }
 
   public ItemDto updateFields(Long userId, Long itemId, Map<String, Object> fields) {
@@ -68,21 +75,33 @@ public class ItemService {
           }
         });
 
-    itemStorage.update(item);
+    itemRepository.saveAndFlush(item);
     return ItemMapper.toDto(item);
   }
 
-  public ItemDto findById(Long itemId) {
+  public ItemPlusResponseDto findById(Long itemId, Long userId) {
     log.info("Найдем вещь с id = {}", itemId);
-    return ItemMapper.toDto(findItem(itemId));
+    Booking lastBooking = bookingRepository.findLastBookingBeforeNow(itemId, userId);
+    Booking nextBooking = bookingRepository.findNextBookingAfterNow(itemId, userId);
+    List<Comment> comments = commentRepository.findAllByItemId(itemId);
+    return ItemMapper.toResponsePlusDto(findItem(itemId), lastBooking, nextBooking, comments);
   }
 
-  public List<ItemDto> findAllByUserId(Long userId) {
+  public List<ItemPlusResponseDto> findAllByUserId(Long userId) {
     log.info("Найдем все вещи пользователя с id = {}", userId);
-    List<ItemDto> itemsDto = new ArrayList<>();
-    itemStorage.findAll().stream()
+    List<ItemPlusResponseDto> itemsDto = new ArrayList<>();
+    itemRepository.findAll().stream()
         .filter(item -> item.getOwner().getId().equals(userId))
-        .forEach(item -> itemsDto.add(ItemMapper.toDto(item)));
+        .forEach(
+            item -> {
+              Booking next = bookingRepository.findNextBookingAfterNow(item.getId(), userId);
+              Booking last = bookingRepository.findLastBookingBeforeNow(item.getId(), userId);
+              List<Comment> comments = commentRepository.findAllByItemId(item.getId());
+              itemsDto.add(ItemMapper.toResponsePlusDto(item, last, next, comments));
+            });
+
+    Comparator<ItemPlusResponseDto> comparator = Comparator.comparing(ItemPlusResponseDto::getId);
+    itemsDto.sort(comparator);
 
     log.info("Всего найдено вещей: {}", itemsDto.size());
     return itemsDto;
@@ -95,20 +114,29 @@ public class ItemService {
       return new ArrayList<>();
     }
 
-    List<ItemDto> itemsDto = new ArrayList<>();
-    String modifiedText = text.replaceAll(" ", "").toLowerCase();
-    itemStorage.findAll().stream()
-        .filter(
-            item ->
-                (item.getAvailable()
-                    && (item.getName().replaceAll(" ", "").toLowerCase().contains(modifiedText)
-                        || item.getDescription()
-                            .replaceAll(" ", "")
-                            .toLowerCase()
-                            .contains(modifiedText))))
-        .forEach(item -> itemsDto.add(ItemMapper.toDto(item)));
+    List<ItemDto> itemsDto =
+        itemRepository.search(text).stream().map(ItemMapper::toDto).collect(Collectors.toList());
 
     log.info("Всего найдено вещей: {}", itemsDto.size());
     return itemsDto;
+  }
+
+  public CommentResponseDto addComment(
+      Long itemId, Long userId, CommentRequestDto commentRequestDto) {
+    Item item =
+        itemRepository
+            .findByIdAndBookerIdAndFinishedBooking(userId, itemId)
+            .orElseThrow(
+                () ->
+                    new CustomException.ItemNotAvailableException(
+                        "Вещь не доступна для комментария"));
+    User user = findUser(userId);
+
+    Comment comment = CommentMapper.toModel(commentRequestDto, user, item);
+    commentRepository.saveAndFlush(comment);
+
+    log.info("Пользователь id={} добавил комментарий к вещи id={}", userId, itemId);
+
+    return CommentMapper.toResponseDto(comment);
   }
 }
