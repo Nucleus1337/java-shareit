@@ -3,6 +3,7 @@ package ru.practicum.shareit.booking.dto;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import ru.practicum.shareit.booking.annotation.ValidDates;
 import ru.practicum.shareit.groups.Group;
 
 import javax.validation.constraints.FutureOrPresent;
@@ -13,6 +14,7 @@ import java.time.LocalDateTime;
 @Data
 @Builder
 @AllArgsConstructor
+@ValidDates
 public class BookingRequestDto {
   @NotNull
   @FutureOrPresent(message = "Дата и время начала в прошлом")

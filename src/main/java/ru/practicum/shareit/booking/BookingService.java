@@ -60,7 +60,7 @@ public class BookingService {
         .orElseThrow(() -> new CustomException.UserNotFoundException("Пользователь не найден"));
   }
 
-  /** TODO: можно написать свой валидатор; оставил на будущее */
+  /*zombie-code*/
   private void checkDateTime(LocalDateTime start, LocalDateTime end) {
     if (end.isBefore(start)) {
       throw new CustomException.BookingDateTimeException(
