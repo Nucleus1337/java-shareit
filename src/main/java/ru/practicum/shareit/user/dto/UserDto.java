@@ -20,5 +20,7 @@ public class UserDto {
   @NotBlank(groups = Group.OnInsert.class)
   private String name;
 
-  @Email private String email;
+  @Email
+  @NotBlank(groups = Group.OnInsert.class)
+  private String email;
 }

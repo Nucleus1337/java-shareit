@@ -2,6 +2,7 @@ package ru.practicum.shareit.exception;
 
 import javax.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -16,7 +17,11 @@ public class ErrorHandler {
   @ExceptionHandler({
     CustomException.EmailException.class,
     MethodArgumentNotValidException.class,
-    ConstraintViolationException.class
+    ConstraintViolationException.class,
+    DataIntegrityViolationException.class,
+    CustomException.ItemNotAvailableException.class,
+    CustomException.BookingDateTimeException.class,
+    CustomException.BookingStatusException.class
   })
   @ResponseStatus(HttpStatus.BAD_REQUEST)
   @ResponseBody
@@ -25,7 +30,11 @@ public class ErrorHandler {
     return new ErrorResponse("Bad request", e.getMessage());
   }
 
-  @ExceptionHandler({CustomException.UserNotFoundException.class})
+  @ExceptionHandler({
+    CustomException.UserNotFoundException.class,
+    CustomException.ItemNotFoundException.class,
+    CustomException.BookingNotFoundException.class
+  })
   @ResponseStatus(HttpStatus.NOT_FOUND)
   @ResponseBody
   ErrorResponse getUserNotFoundExceptionResponse(RuntimeException e) {
@@ -38,6 +47,9 @@ public class ErrorHandler {
   @ResponseBody
   ErrorResponse getRuntimeExceptionResponse(Exception e) {
     log.error("Internal Server Error: {}", e.getMessage());
+    if (e.getClass().equals(CustomException.BookingStateException.class)) {
+      return new ErrorResponse(e.getMessage(), e.getMessage());
+    }
     return new ErrorResponse("Internal Server Error", e.getMessage());
   }
 }
