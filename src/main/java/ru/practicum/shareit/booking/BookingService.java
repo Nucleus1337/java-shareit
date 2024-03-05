@@ -1,7 +1,14 @@
 package ru.practicum.shareit.booking;
 
+import static ru.practicum.shareit.utils.UtilsClass.getPageable;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.booking.dto.BookingRequestDto;
 import ru.practicum.shareit.booking.dto.BookingResponseDto;
@@ -12,11 +19,6 @@ import ru.practicum.shareit.item.ItemRepository;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.User;
 import ru.practicum.shareit.user.UserRepository;
-
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -95,16 +97,19 @@ public class BookingService {
   }
 
   public List<BookingResponseDto> getAllBookingsForOwnerOrBooker(
-      Long userId, String bookingState, String userType) {
+      Long userId, String bookingState, String userType, Integer from, Integer size) {
     List<Booking> bookings;
+    Pageable pageable = getPageable(from, size);
+
+    User user = getUser(userId);
 
     try {
       BookingState state = BookingState.valueOf(bookingState);
 
       if (userType.equals("OWNER")) {
-        bookings = bookingRepository.findAllByOwnerId(userId);
+        bookings = bookingRepository.findAllByOwnerId(userId, pageable);
       } else {
-        bookings = bookingRepository.findAllByBookerId(userId);
+        bookings = bookingRepository.findByBookerOrderByStartDesc(user, pageable);
       }
 
       if (bookings.isEmpty()) {

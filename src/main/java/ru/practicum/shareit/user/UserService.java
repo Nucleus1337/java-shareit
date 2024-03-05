@@ -13,17 +13,10 @@ import ru.practicum.shareit.user.dto.UserDto;
 @RequiredArgsConstructor
 @Slf4j
 public class UserService {
-  //  private final UserStorage userStorage;
   private final UserRepository userRepository;
 
   private void checkEmail(String newEmail) {
     log.info("Проверяем строку email: {}", newEmail);
-//    if (newEmail == null) {
-//      throw new CustomException.EmailException("Не задан email");
-//    }
-
-    //    Set<String> emails =
-    //        userStorage.findAll().stream().map(User::getEmail).collect(Collectors.toSet());
     Set<String> emails =
         userRepository.findAll().stream().map(User::getEmail).collect(Collectors.toSet());
 
@@ -40,7 +33,6 @@ public class UserService {
     log.info("Создаем нового пользователяя {}", userDto);
     checkEmail(userDto.getEmail());
 
-    //    User user = userStorage.insert(UserMapper.toModel(userDto));
     User user = userRepository.saveAndFlush(UserMapper.toModel(userDto));
 
     return UserMapper.toDto(user);
@@ -48,7 +40,6 @@ public class UserService {
 
   public UserDto update(UserDto userRequest, Long id) {
     log.info("Обновляем пользователя с id = {}", id);
-    //    User user = userStorage.findById(id);
     User user = getUserById(id);
 
     String name = userRequest.getName();
@@ -71,18 +62,15 @@ public class UserService {
   }
 
   public UserDto findById(Long id) {
-    //    return UserMapper.toDto(userStorage.findById(id));
     return UserMapper.toDto(getUserById(id));
   }
 
   public void removeById(Long id) {
     log.info("Удаляем пользователя с id = {}", id);
-    //    userStorage.delete(id);
     userRepository.deleteById(id);
   }
 
   public List<UserDto> findAll() {
-    //    return userStorage.findAll().stream().map(UserMapper::toDto).collect(Collectors.toList());
     return userRepository.findAll().stream().map(UserMapper::toDto).collect(Collectors.toList());
   }
 

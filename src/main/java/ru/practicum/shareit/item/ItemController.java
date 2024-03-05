@@ -3,8 +3,12 @@ package ru.practicum.shareit.item;
 import java.util.List;
 import java.util.Map;
 import javax.validation.Valid;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.PositiveOrZero;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -24,6 +28,7 @@ import ru.practicum.shareit.item.dto.ItemPlusResponseDto;
 @RequestMapping("/items")
 @RequiredArgsConstructor
 @Slf4j
+@Validated
 public class ItemController {
   private static final String USER_ID_HEADER = "X-Sharer-User-Id";
   private final ItemService itemService;
@@ -52,15 +57,21 @@ public class ItemController {
   }
 
   @GetMapping
-  public List<ItemPlusResponseDto> findAllByUserId(@RequestHeader(USER_ID_HEADER) Long userId) {
-    log.info("GET /items: userId={}", userId);
-    return itemService.findAllByUserId(userId);
+  public List<ItemPlusResponseDto> findAllByUserId(
+      @RequestHeader(USER_ID_HEADER) Long userId,
+      @RequestParam(required = false) @PositiveOrZero Integer from,
+      @RequestParam(required = false) @Min(1) Integer size) {
+    log.info("GET /items: userId={}, from={}, size={}", userId, from, size);
+    return itemService.findAllByUserId(userId, from, size);
   }
 
   @GetMapping("/search")
-  public List<ItemDto> search(@RequestParam String text) {
-    log.info("GET /items/search: test={}", text);
-    return itemService.search(text);
+  public List<ItemDto> search(
+      @RequestParam String text,
+      @RequestParam(required = false) @PositiveOrZero Integer from,
+      @RequestParam(required = false) @Min(1) Integer size) {
+    log.info("GET /items/search: test={}, from={}, size={}", text, from, size);
+    return itemService.search(text, from, size);
   }
 
   @PostMapping("/{itemId}/comment")

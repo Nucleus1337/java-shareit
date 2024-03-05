@@ -33,7 +33,8 @@ public class ErrorHandler {
   @ExceptionHandler({
     CustomException.UserNotFoundException.class,
     CustomException.ItemNotFoundException.class,
-    CustomException.BookingNotFoundException.class
+    CustomException.BookingNotFoundException.class,
+    CustomException.ItemRequestNotFoundException.class
   })
   @ResponseStatus(HttpStatus.NOT_FOUND)
   @ResponseBody

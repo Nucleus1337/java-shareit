@@ -60,4 +60,10 @@ public class CustomException {
       super(message);
     }
   }
+
+  public static class ItemRequestNotFoundException extends RuntimeException {
+    public ItemRequestNotFoundException(String message) {
+      super(message);
+    }
+  }
 }

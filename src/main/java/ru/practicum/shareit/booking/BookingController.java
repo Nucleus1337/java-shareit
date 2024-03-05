@@ -2,6 +2,9 @@ package ru.practicum.shareit.booking;
 
 import java.util.List;
 import javax.validation.Valid;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.PositiveOrZero;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -23,6 +26,7 @@ import ru.practicum.shareit.groups.Group;
 @RequestMapping(path = "/bookings")
 @RequiredArgsConstructor
 @Slf4j
+@Validated
 public class BookingController {
   private static final String USER_ID_HEADER = "X-Sharer-User-Id";
   private final BookingService bookingService;
@@ -59,16 +63,21 @@ public class BookingController {
   @GetMapping
   public List<BookingResponseDto> getAllBookingsForBooker(
       @RequestHeader(USER_ID_HEADER) Long userId,
-      @RequestParam(required = false, defaultValue = "ALL") String state) {
-    log.info("GET /bookings: userId={}, state={}", userId, state);
-    return bookingService.getAllBookingsForOwnerOrBooker(userId, state, "BOOKER");
+      @RequestParam(required = false, defaultValue = "ALL") String state,
+      @RequestParam(required = false) @PositiveOrZero Integer from,
+      @RequestParam(required = false) @Min(1) Integer size) {
+    log.info("GET /bookings: userId={}, state={}, from={}, size={}", userId, state, from, size);
+    return bookingService.getAllBookingsForOwnerOrBooker(userId, state, "BOOKER", from, size);
   }
 
   @GetMapping(path = "/owner")
   public List<BookingResponseDto> getAllBookingsForOwner(
       @RequestHeader(USER_ID_HEADER) Long userId,
-      @RequestParam(required = false, defaultValue = "ALL") String state) {
-    log.info("GET /bookings/owner: userId={}, state={}", userId, state);
-    return bookingService.getAllBookingsForOwnerOrBooker(userId, state, "OWNER");
+      @RequestParam(required = false, defaultValue = "ALL") String state,
+      @RequestParam(required = false) @PositiveOrZero Integer from,
+      @RequestParam(required = false) @Min(1) Integer size) {
+    log.info(
+        "GET /bookings/owner: userId={}, state={}, from={}, size={}", userId, state, from, size);
+    return bookingService.getAllBookingsForOwnerOrBooker(userId, state, "OWNER", from, size);
   }
 }
