@@ -1,192 +1,245 @@
 package ru.practicum.shareit.item;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Pageable;
+import ru.practicum.shareit.booking.Booking;
+import ru.practicum.shareit.booking.BookingRepository;
+import ru.practicum.shareit.bookingStatus.BookingStatus;
+import ru.practicum.shareit.comment.Comment;
+import ru.practicum.shareit.comment.CommentRepository;
 import ru.practicum.shareit.comment.dto.CommentRequestDto;
 import ru.practicum.shareit.comment.dto.CommentResponseDto;
+import ru.practicum.shareit.exception.CustomException;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.dto.ItemPlusResponseDto;
+import ru.practicum.shareit.item.model.Item;
+import ru.practicum.shareit.request.ItemRequest;
+import ru.practicum.shareit.request.ItemRequestRepository;
+import ru.practicum.shareit.user.User;
+import ru.practicum.shareit.user.UserRepository;
 
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(ItemController.class)
+@ExtendWith(MockitoExtension.class)
 public class ItemServiceTest {
-  @Autowired MockMvc mockMvc;
-  @MockBean ItemService itemService;
+  @Mock private ItemRepository itemRepository;
+  @Mock private UserRepository userRepository;
+  @Mock private BookingRepository bookingRepository;
+  @Mock private CommentRepository commentRepository;
+  @Mock private ItemRequestRepository itemRequestRepository;
 
-  private final ObjectMapper objectMapper = new ObjectMapper();
+  @InjectMocks private ItemService itemService;
 
-  private static final String USER_ID_HEADER = "X-Sharer-User-Id";
+  private User user;
+  private Item item;
+  private ItemRequest itemRequest;
+  private LocalDateTime now = LocalDateTime.now();
+
+  private Booking booking;
+  private Comment comment;
 
   private ItemDto itemDtoIn;
-  private ItemDto itemDtoOut;
-  private ItemPlusResponseDto itemPlusResponseDto;
-  private ItemPlusResponseDto.Comment itemComment;
+  private ItemDto itemDtoInWithRequest;
+  private CommentRequestDto commentRequestDto;
 
   @BeforeEach
   public void setUp() {
-    itemDtoOut =
-        ItemDto.builder()
+    user = User.builder().id(1L).name("Timmy").email("timmy@email.com").build();
+    itemRequest =
+        ItemRequest.builder()
+            .id(1L)
+            .description("Item request description")
+            .requester(user)
+            .created(now)
+            .build();
+    item =
+        Item.builder()
             .id(1L)
             .name("Item")
-            .description("Description")
+            .description("Item description")
+            .owner(user)
             .available(true)
-            .requestId(1L)
+            .request(itemRequest)
             .build();
 
     itemDtoIn =
         ItemDto.builder()
+            .id(1L)
             .name("Item")
-            .description("Description")
+            .description("Item desctiption")
+            .available(true)
+            .build();
+    itemDtoInWithRequest =
+        ItemDto.builder()
+            .id(1L)
+            .name("Item")
+            .description("Item desctiption")
             .available(true)
             .requestId(1L)
             .build();
-
-    itemComment = new ItemPlusResponseDto.Comment(1L, "Comment", "AuthorName", LocalDateTime.now());
-
-    itemPlusResponseDto =
-        ItemPlusResponseDto.builder()
+    booking =
+        Booking.builder()
             .id(1L)
-            .name("ItemPlus")
-            .description("ItemPlus Description")
-            .available(true)
-            .lastBooking(new ItemPlusResponseDto.LastBooking(22L, 2L))
-            .nextBooking(new ItemPlusResponseDto.NextBooking(33L, 3L))
-            .comments(Collections.singletonList(itemComment))
+            .item(item)
+            .booker(user)
+            .status(BookingStatus.APPROVED)
+            .start(now)
+            .end(now)
             .build();
+
+    comment = Comment.builder().id(1L).item(item).text("text").author(user).created(now).build();
+    commentRequestDto = new CommentRequestDto("text");
   }
 
   @Test
-  public void createShouldReturnItemDto() throws Exception {
-    when(itemService.create(anyLong(), any(ItemDto.class))).thenReturn(itemDtoOut);
+  public void createShouldReturnItemDto() {
+    when(userRepository.findById(anyLong())).thenReturn(Optional.ofNullable(user));
+    when(itemRepository.saveAndFlush(any(Item.class))).thenReturn(item);
+    when(itemRequestRepository.findById(anyLong())).thenReturn(Optional.ofNullable(itemRequest));
 
-    mockMvc
-        .perform(
-            post("/items")
-                .content(objectMapper.writeValueAsString(itemDtoIn))
-                .contentType(MediaType.APPLICATION_JSON)
-                .characterEncoding(StandardCharsets.UTF_8)
-                .accept(MediaType.APPLICATION_JSON)
-                .header(USER_ID_HEADER, "1"))
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$.id").value(itemDtoOut.getId()));
+    ItemDto createdItem = itemService.create(1L, itemDtoIn);
+
+    assertThat(createdItem).isNotNull();
+    assertThat(createdItem.getId()).isEqualTo(1L);
+    assertThat(createdItem.getName()).isEqualTo(itemDtoIn.getName());
+
+    ItemDto createdItemWithRequest = itemService.create(1L, itemDtoInWithRequest);
+
+    assertThat(createdItemWithRequest).isNotNull();
+    assertThat(createdItemWithRequest.getId()).isEqualTo(1L);
+    assertThat(createdItemWithRequest.getName()).isEqualTo(itemDtoInWithRequest.getName());
+    assertThat(createdItemWithRequest.getRequestId())
+        .isEqualTo(itemDtoInWithRequest.getRequestId());
   }
 
   @Test
-  public void updateFieldsShouldReturnUpdatedItemDto() throws Exception {
-    when(itemService.updateFields(anyLong(), anyLong(), anyMap())).thenReturn(itemDtoOut);
+  public void findByIdShouldReturnItemPlusResponseDto() {
+    when(bookingRepository.findLastBookingBeforeNow(anyLong(), anyLong())).thenReturn(booking);
+    when(bookingRepository.findNextBookingAfterNow(anyLong(), anyLong())).thenReturn(booking);
+    when(commentRepository.findAllByItemId(anyLong()))
+        .thenReturn(Collections.singletonList(comment));
+    when(itemRepository.findById(anyLong())).thenReturn(Optional.ofNullable(item));
 
-    mockMvc
-        .perform(
-            patch("/items/{id}", 1)
-                .content(objectMapper.writeValueAsString(itemDtoIn))
-                .contentType(MediaType.APPLICATION_JSON)
-                .characterEncoding(StandardCharsets.UTF_8)
-                .accept(MediaType.APPLICATION_JSON)
-                .header(USER_ID_HEADER, "1"))
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$.id").value(itemDtoOut.getId()));
+    ItemPlusResponseDto itemPlusResponseDto = itemService.findById(1L, 1L);
+
+    assertThat(itemPlusResponseDto.getId()).isEqualTo(item.getId());
+    assertThat(itemPlusResponseDto.getComments().size()).isEqualTo(1);
   }
 
   @Test
-  public void findItemByIdShouldReturnItemPlusResponseDto() throws Exception {
-    when(itemService.findById(anyLong(), anyLong())).thenReturn(itemPlusResponseDto);
+  public void findAllByUserIdShouldReturnListOfItemPlusResponseDto() {
+    when(userRepository.findById(anyLong())).thenReturn(Optional.ofNullable(user));
+    when(bookingRepository.findLastBookingBeforeNow(anyLong(), anyLong())).thenReturn(booking);
+    when(bookingRepository.findNextBookingAfterNow(anyLong(), anyLong())).thenReturn(booking);
+    when(commentRepository.findAllByItemId(anyLong()))
+        .thenReturn(Collections.singletonList(comment));
+    when(itemRepository.findByOwner(any(User.class), any(Pageable.class)))
+        .thenReturn(Collections.singletonList(item));
 
-    mockMvc
-        .perform(get("/items/{id}", 1).header(USER_ID_HEADER, "1"))
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$.id").value(itemPlusResponseDto.getId()))
-        .andExpect(jsonPath("$.name").value(itemPlusResponseDto.getName()));
+    List<ItemPlusResponseDto> dtosWithPagination = itemService.findAllByUserId(1L, 1, 1);
+
+    assertThat(dtosWithPagination.size()).isEqualTo(1);
+
+    List<ItemPlusResponseDto> dtosWithoutPagination = itemService.findAllByUserId(1L, null, null);
+
+    assertThat(dtosWithoutPagination.size()).isEqualTo(1);
   }
 
   @Test
-  public void findAllByUserIdShouldReturnListOfItemPlusResponseDto() throws Exception {
-    when(itemService.findAllByUserId(anyLong(), nullable(Integer.class), nullable(Integer.class)))
-        .thenReturn(Collections.singletonList(itemPlusResponseDto));
+  public void searchShouldReturnListOfItemDto() {
+    when(itemRepository.search(anyString(), any(Pageable.class)))
+        .thenReturn(Collections.singletonList(item));
 
-    mockMvc
-        .perform(
-            get("/items").header(USER_ID_HEADER, 1).queryParam("from", "1").queryParam("size", "2"))
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$.length()").value(1));
+    List<ItemDto> dtosWithPagination = itemService.search("text", 1, 1);
 
-    mockMvc
-        .perform(get("/items").header(USER_ID_HEADER, 1))
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$.length()").value(1));
+    assertThat(dtosWithPagination.size()).isEqualTo(1);
+
+    List<ItemDto> dtosWithoutPagination = itemService.search("text", null, null);
+
+    assertThat(dtosWithoutPagination.size()).isEqualTo(1);
   }
 
   @Test
-  public void searchShouldReturnListOfItemDto() throws Exception {
-    MultiValueMap<String, String> params =
-        new LinkedMultiValueMap<>() {
+  public void searchWithEmptySearchStringShouldReturnReturnEmptyList() {
+    List<ItemDto> dtosWithoutPagination = itemService.search("", null, null);
+
+    assertThat(dtosWithoutPagination.size()).isEqualTo(0);
+  }
+
+  @Test
+  public void addCommentShouldReturnCommentResponseDto() {
+    when(userRepository.findById(anyLong())).thenReturn(Optional.ofNullable(user));
+    when(itemRepository.findByIdAndBookerIdAndFinishedBooking(anyLong(), anyLong()))
+        .thenReturn(Optional.ofNullable(item));
+    when(commentRepository.saveAndFlush(any(Comment.class))).thenReturn(comment);
+
+    CommentResponseDto commentResponseDto = itemService.addComment(1L, 1L, commentRequestDto);
+
+    assertThat(commentResponseDto).isNotNull();
+    assertThat(commentResponseDto.getAuthorName()).isEqualTo(comment.getAuthor().getName());
+    assertThat(commentResponseDto.getText()).isEqualTo(commentRequestDto.getText());
+  }
+
+  @Test
+  public void addCommentShouldReturnItemNotAvailableException() {
+    when(itemRepository.findByIdAndBookerIdAndFinishedBooking(anyLong(), anyLong()))
+        .thenReturn(Optional.empty());
+
+    Assertions.assertThatExceptionOfType(CustomException.ItemNotAvailableException.class)
+        .isThrownBy(() -> itemService.addComment(1L, 1L, commentRequestDto));
+  }
+
+  @Test
+  public void updateFieldsShouldReturnItemDto() {
+    when(itemRepository.findById(anyLong())).thenReturn(Optional.ofNullable(item));
+    when(userRepository.findById(anyLong())).thenReturn(Optional.ofNullable(user));
+    when(itemRepository.saveAndFlush(any(Item.class))).thenReturn(item);
+
+    Map<String, Object> params =
+        new HashMap<>() {
           {
-            add("text", "text");
-            add("from", "1");
-            add("size", "2");
+            put("description", "text2");
           }
         };
-    when(itemService.search(anyString(), nullable(Integer.class), nullable(Integer.class)))
-        .thenReturn(Collections.singletonList(itemDtoOut));
 
-    mockMvc
-        .perform(get("/items/search").queryParams(params))
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$.length()").value(1));
+    ItemDto itemDto = itemService.updateFields(1L, 1L, params);
 
-    mockMvc
-        .perform(get("/items/search").queryParam("text", "text"))
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$.length()").value(1));
+    assertThat(itemDto).isNotNull();
+    assertThat(itemDto.getDescription()).isEqualTo(params.get("description"));
   }
 
   @Test
-  public void addCommentShouldReturnItemWithComment() throws Exception {
-    CommentResponseDto commentResponseDto =
-        CommentResponseDto.builder()
-            .id(1L)
-            .text("Comment")
-            .authorName("Author Name")
-            .created(LocalDateTime.now())
-            .build();
-    CommentRequestDto commentRequestDto = new CommentRequestDto("Comment");
+  public void updateFieldsThrowsUserNotFoundException() {
+    User otherUser = User.builder().id(2L).name("Gimmy").email("gimmy@email.com").build();
 
-    when(itemService.addComment(anyLong(), anyLong(), any(CommentRequestDto.class)))
-        .thenReturn(commentResponseDto);
+    when(itemRepository.findById(anyLong())).thenReturn(Optional.ofNullable(item));
+    when(userRepository.findById(anyLong())).thenReturn(Optional.ofNullable(otherUser));
 
-    mockMvc
-        .perform(
-            post("/items/{itemId}/comment", 1)
-                .header(USER_ID_HEADER, 1)
-                .content(objectMapper.writeValueAsString(commentRequestDto))
-                .contentType(MediaType.APPLICATION_JSON)
-                .characterEncoding(StandardCharsets.UTF_8)
-                .accept(MediaType.APPLICATION_JSON))
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$.id").value(1))
-        .andExpect(jsonPath("$.authorName").value(commentResponseDto.getAuthorName()))
-        .andExpect(jsonPath("$.text").value(commentResponseDto.getText()));
+    Map<String, Object> params =
+            new HashMap<>() {
+              {
+                put("description", "text2");
+              }
+            };
+
+    Assertions.assertThatExceptionOfType(CustomException.UserNotFoundException.class)
+            .isThrownBy(() -> itemService.updateFields(2L, 1L, params));
   }
 }
