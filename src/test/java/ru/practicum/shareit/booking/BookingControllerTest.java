@@ -155,13 +155,9 @@ public class BookingControllerTest {
         .thenReturn(Collections.singletonList(bookingResponseDto));
 
     MultiValueMap<String, String> params =
-        new LinkedMultiValueMap<>() {
-          {
-            add("state", "ALL");
+        new LinkedMultiValueMap<>() {{add("state", "ALL");
             add("from", "1");
-            add("size", "1");
-          }
-        };
+            add("size", "1");}};
 
     int userId = 1;
     mockMvc
@@ -176,13 +172,9 @@ public class BookingControllerTest {
         .thenReturn(Collections.singletonList(bookingResponseDto));
 
     MultiValueMap<String, String> params =
-        new LinkedMultiValueMap<>() {
-          {
-            add("state", "ALL");
+        new LinkedMultiValueMap<>() {{add("state", "ALL");
             add("from", "1");
-            add("size", "1");
-          }
-        };
+            add("size", "1");}};
 
     int userId = 1;
     mockMvc

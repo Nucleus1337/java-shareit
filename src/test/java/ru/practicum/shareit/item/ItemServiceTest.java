@@ -212,11 +212,7 @@ public class ItemServiceTest {
     when(itemRepository.saveAndFlush(any(Item.class))).thenReturn(item);
 
     Map<String, Object> params =
-        new HashMap<>() {
-          {
-            put("description", "text2");
-          }
-        };
+        new HashMap<>() {{put("description", "text2");}};
 
     ItemDto itemDto = itemService.updateFields(1L, 1L, params);
 
@@ -232,11 +228,7 @@ public class ItemServiceTest {
     when(userRepository.findById(anyLong())).thenReturn(Optional.ofNullable(otherUser));
 
     Map<String, Object> params =
-        new HashMap<>() {
-          {
-            put("description", "text2");
-          }
-        };
+        new HashMap<>() {{put("description", "text2");}};
 
     Assertions.assertThatExceptionOfType(CustomException.UserNotFoundException.class)
         .isThrownBy(() -> itemService.updateFields(2L, 1L, params));
