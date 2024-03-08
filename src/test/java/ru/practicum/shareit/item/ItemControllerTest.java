@@ -139,14 +139,19 @@ public class ItemControllerTest {
 
   @Test
   public void searchShouldReturnListOfItemDto() throws Exception {
-    MultiValueMap<String, String> params =
-        new LinkedMultiValueMap<>() {
-          {
-            add("text", "text");
-            add("from", "1");
-            add("size", "2");
-          }
-        };
+//    MultiValueMap<String, String> params =
+//        new LinkedMultiValueMap<>() {
+//          {
+//            add("text", "text");
+//            add("from", "1");
+//            add("size", "2");
+//          }
+//        };
+
+    MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+    params.add("text", "text");
+    params.add("from", "1");
+    params.add("size", "2");
     when(itemService.search(anyString(), nullable(Integer.class), nullable(Integer.class)))
         .thenReturn(Collections.singletonList(itemDtoOut));
 

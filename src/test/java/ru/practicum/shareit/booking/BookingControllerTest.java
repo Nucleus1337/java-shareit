@@ -154,10 +154,19 @@ public class BookingControllerTest {
             anyLong(), anyString(), anyString(), anyInt(), anyInt()))
         .thenReturn(Collections.singletonList(bookingResponseDto));
 
-    MultiValueMap<String, String> params =
-        new LinkedMultiValueMap<>() {{add("state", "ALL");
-            add("from", "1");
-            add("size", "1");}};
+    //    MultiValueMap<String, String> params =
+    //        new LinkedMultiValueMap<>() {
+    //          {
+    //            add("state", "ALL");
+    //            add("from", "1");
+    //            add("size", "1");
+    //          }
+    //        };
+
+    MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+    params.add("state", "ALL");
+    params.add("from", "1");
+    params.add("size", "1");
 
     int userId = 1;
     mockMvc
@@ -171,10 +180,19 @@ public class BookingControllerTest {
             anyLong(), anyString(), anyString(), anyInt(), anyInt()))
         .thenReturn(Collections.singletonList(bookingResponseDto));
 
-    MultiValueMap<String, String> params =
-        new LinkedMultiValueMap<>() {{add("state", "ALL");
-            add("from", "1");
-            add("size", "1");}};
+    //    MultiValueMap<String, String> params =
+    //        new LinkedMultiValueMap<>() {
+    //          {
+    //            add("state", "ALL");
+    //            add("from", "1");
+    //            add("size", "1");
+    //          }
+    //        };
+
+    MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+    params.add("state", "ALL");
+    params.add("from", "1");
+    params.add("size", "1");
 
     int userId = 1;
     mockMvc
