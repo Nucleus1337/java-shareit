@@ -1,5 +1,17 @@
 package ru.practicum.shareit.item;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
+
+import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,19 +35,6 @@ import ru.practicum.shareit.request.ItemRequest;
 import ru.practicum.shareit.request.ItemRequestRepository;
 import ru.practicum.shareit.user.User;
 import ru.practicum.shareit.user.UserRepository;
-
-import java.time.LocalDateTime;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class ItemServiceTest {
@@ -233,13 +232,13 @@ public class ItemServiceTest {
     when(userRepository.findById(anyLong())).thenReturn(Optional.ofNullable(otherUser));
 
     Map<String, Object> params =
-            new HashMap<>() {
-              {
-                put("description", "text2");
-              }
-            };
+        new HashMap<>() {
+          {
+            put("description", "text2");
+          }
+        };
 
     Assertions.assertThatExceptionOfType(CustomException.UserNotFoundException.class)
-            .isThrownBy(() -> itemService.updateFields(2L, 1L, params));
+        .isThrownBy(() -> itemService.updateFields(2L, 1L, params));
   }
 }

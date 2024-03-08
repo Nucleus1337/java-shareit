@@ -1,6 +1,5 @@
 package ru.practicum.shareit.request;
 
-import java.util.Collections;
 import java.util.List;
 import javax.validation.Valid;
 import javax.validation.constraints.Min;

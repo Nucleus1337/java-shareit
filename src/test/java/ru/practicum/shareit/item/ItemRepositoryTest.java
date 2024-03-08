@@ -1,15 +1,14 @@
 package ru.practicum.shareit.item;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.User;
 import ru.practicum.shareit.user.UserRepository;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 @DataJpaTest
 class ItemRepositoryTest {
@@ -24,11 +23,8 @@ class ItemRepositoryTest {
   //    user = user
   //    }
 
-
   @BeforeAll
-  static void beforeAll() {
-
-    }
+  static void beforeAll() {}
 
   @Test
   void search() {}
