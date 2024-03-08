@@ -1,6 +1,6 @@
 package ru.practicum.shareit.user;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -17,6 +17,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import ru.practicum.shareit.exception.CustomException;
 import ru.practicum.shareit.user.dto.UserDto;
 
 @ExtendWith(MockitoExtension.class)
@@ -27,11 +28,13 @@ class UserServiceTest {
   @InjectMocks private UserService userService;
 
   private User user;
+  private UserDto otherUserDto;
   private UserDto userDto;
 
   @BeforeEach
   public void setUp() {
     user = User.builder().id(1L).name("Timmy").email("timmy@email.com").build();
+    otherUserDto = UserDto.builder().name("Gimmy").email("timmy@email.com").build();
     userDto = UserDto.builder().name("Timmy").email("timmy@email.com").build();
   }
 
@@ -55,6 +58,16 @@ class UserServiceTest {
 
     Assertions.assertThat(updatedUser).isNotNull();
     Assertions.assertThat(updatedUser.getId()).isEqualTo(1L);
+    Assertions.assertThat(updatedUser.getName()).isEqualTo("Timmy2");
+    Assertions.assertThat(updatedUser.getEmail()).isEqualTo("timmy2@email.com");
+
+    userUpdateDto.setName(null);
+    userUpdateDto.setEmail(null);
+
+    UserDto updatedUserWithoutNameAndEmail = userService.update(userUpdateDto, 1L);
+
+    Assertions.assertThat(updatedUserWithoutNameAndEmail).isNotNull();
+    Assertions.assertThat(updatedUserWithoutNameAndEmail.getId()).isEqualTo(1L);
     Assertions.assertThat(updatedUser.getName()).isEqualTo("Timmy2");
     Assertions.assertThat(updatedUser.getEmail()).isEqualTo("timmy2@email.com");
   }
@@ -86,5 +99,21 @@ class UserServiceTest {
 
     Assertions.assertThat(userDtos.size()).isEqualTo(1);
     Assertions.assertThat(userDtos.get(0).getId()).isEqualTo(1L);
+  }
+
+  @Test
+  public void findByIdShouldReturnException() {
+    when(userRepository.findById(Mockito.anyLong())).thenReturn(Optional.empty());
+
+    Assertions.assertThatExceptionOfType(CustomException.UserNotFoundException.class)
+            .isThrownBy(() -> userService.findById(1L));
+  }
+
+  @Test
+  public void createShouldReturnUserException() {
+    when(userRepository.findAll()).thenReturn(Collections.singletonList(user));
+
+    assertThatExceptionOfType(CustomException.UserException.class)
+            .isThrownBy(() -> userService.create(otherUserDto));
   }
 }

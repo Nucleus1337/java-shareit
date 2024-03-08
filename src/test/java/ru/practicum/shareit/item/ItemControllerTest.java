@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.nullable;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -27,6 +28,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import ru.practicum.shareit.comment.dto.CommentRequestDto;
 import ru.practicum.shareit.comment.dto.CommentResponseDto;
+import ru.practicum.shareit.exception.CustomException;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.dto.ItemPlusResponseDto;
 
@@ -110,6 +112,38 @@ public class ItemControllerTest {
   }
 
   @Test
+  public void updateFieldsShouldReturnNotFound() throws Exception {
+    doThrow(CustomException.UserNotFoundException.class)
+        .when(itemService)
+        .updateFields(anyLong(), anyLong(), anyMap());
+
+    mockMvc
+        .perform(
+            patch("/items/{id}", 1)
+                .content(objectMapper.writeValueAsString(itemDtoIn))
+                .contentType(MediaType.APPLICATION_JSON)
+                .characterEncoding(StandardCharsets.UTF_8)
+                .accept(MediaType.APPLICATION_JSON)
+                .header(USER_ID_HEADER, "1"))
+        .andExpect(status().isNotFound());
+  }
+
+  @Test
+  public void updateFieldsShouldReturnEternalServerError() throws Exception {
+    doThrow(RuntimeException.class).when(itemService).updateFields(anyLong(), anyLong(), anyMap());
+
+    mockMvc
+        .perform(
+            patch("/items/{id}", 1)
+                .content(objectMapper.writeValueAsString(itemDtoIn))
+                .contentType(MediaType.APPLICATION_JSON)
+                .characterEncoding(StandardCharsets.UTF_8)
+                .accept(MediaType.APPLICATION_JSON)
+                .header(USER_ID_HEADER, "1"))
+        .andExpect(status().is5xxServerError());
+  }
+
+  @Test
   public void findItemByIdShouldReturnItemPlusResponseDto() throws Exception {
     when(itemService.findById(anyLong(), anyLong())).thenReturn(itemPlusResponseDto);
 
@@ -139,14 +173,14 @@ public class ItemControllerTest {
 
   @Test
   public void searchShouldReturnListOfItemDto() throws Exception {
-//    MultiValueMap<String, String> params =
-//        new LinkedMultiValueMap<>() {
-//          {
-//            add("text", "text");
-//            add("from", "1");
-//            add("size", "2");
-//          }
-//        };
+    //    MultiValueMap<String, String> params =
+    //        new LinkedMultiValueMap<>() {
+    //          {
+    //            add("text", "text");
+    //            add("from", "1");
+    //            add("size", "2");
+    //          }
+    //        };
 
     MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
     params.add("text", "text");

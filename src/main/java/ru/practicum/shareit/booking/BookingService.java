@@ -34,7 +34,7 @@ public class BookingService {
         bookingRequestDto.getItemId(),
         userId);
 
-    checkDateTime(bookingRequestDto.getStart(), bookingRequestDto.getEnd());
+//    checkDateTime(bookingRequestDto.getStart(), bookingRequestDto.getEnd());
 
     Item item =
         itemRepository
@@ -63,15 +63,15 @@ public class BookingService {
   }
 
   /*zombie-code*/
-  private void checkDateTime(LocalDateTime start, LocalDateTime end) {
-    if (end.isBefore(start)) {
-      throw new CustomException.BookingDateTimeException(
-          "Дата и время окончания раньше даты и время начала");
-    } else if (start.equals(end)) {
-      throw new CustomException.BookingDateTimeException(
-          "Дата и время окончания и начала совпадают");
-    }
-  }
+//  private void checkDateTime(LocalDateTime start, LocalDateTime end) {
+//    if (end.isBefore(start)) {
+//      throw new CustomException.BookingDateTimeException(
+//          "Дата и время окончания раньше даты и время начала");
+//    } else if (start.equals(end)) {
+//      throw new CustomException.BookingDateTimeException(
+//          "Дата и время окончания и начала совпадают");
+//    }
+//  }
 
   public BookingResponseDto approveBooking(Long bookingId, Boolean approved, Long ownerId) {
     Booking booking =

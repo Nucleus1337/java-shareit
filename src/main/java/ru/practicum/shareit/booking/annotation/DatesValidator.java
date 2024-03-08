@@ -19,7 +19,11 @@ public class DatesValidator implements ConstraintValidator<ValidDates, BookingRe
       return true;
     }
 
+    if (bookingRequestDto.getStart().isEqual(bookingRequestDto.getEnd())){
+      return false;
+    }
+
     return !bookingRequestDto.getStart().isAfter(bookingRequestDto.getEnd())
-        && !bookingRequestDto.getEnd().isBefore(bookingRequestDto.getStart());
+            && !bookingRequestDto.getEnd().isBefore(bookingRequestDto.getStart());
   }
 }

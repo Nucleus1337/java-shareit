@@ -8,14 +8,10 @@ import org.springframework.data.domain.Sort;
 @UtilityClass
 public class UtilsClass {
   public static Pageable getPageable(Integer from, Integer size, Sort sort) {
-    if (sort == null) {
-      return getPageable(from, size);
+    if (from != null && size != null) {
+      return PageRequest.of(from / size, size, sort);
     } else {
-      if (from != null && size != null) {
-        return PageRequest.of(from / size, size, sort);
-      } else {
-        return Pageable.unpaged();
-      }
+      return Pageable.unpaged();
     }
   }
 

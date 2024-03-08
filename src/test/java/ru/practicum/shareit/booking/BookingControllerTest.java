@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -30,6 +31,7 @@ import org.springframework.util.MultiValueMap;
 import ru.practicum.shareit.booking.dto.BookingRequestDto;
 import ru.practicum.shareit.booking.dto.BookingResponseDto;
 import ru.practicum.shareit.bookingStatus.BookingStatus;
+import ru.practicum.shareit.exception.CustomException;
 import ru.practicum.shareit.user.User;
 
 @WebMvcTest(BookingController.class)
@@ -106,6 +108,32 @@ public class BookingControllerTest {
 
     bookingRequestDto.setStart(LocalDateTime.of(2025, 1, 1, 1, 1, 1));
     bookingRequestDto.setEnd(LocalDateTime.of(2020, 1, 1, 1, 1, 1));
+
+    mockMvc
+        .perform(
+            post("/bookings")
+                .header(USER_ID_HEADER, 1L)
+                .content(objectMapper.writeValueAsString(bookingRequestDto))
+                .contentType(MediaType.APPLICATION_JSON)
+                .characterEncoding(StandardCharsets.UTF_8)
+                .accept(MediaType.APPLICATION_JSON))
+        .andExpect(status().isBadRequest());
+
+    bookingRequestDto.setStart(LocalDateTime.of(2025, 1, 1, 1, 1, 1));
+    bookingRequestDto.setEnd(LocalDateTime.of(2025, 1, 1, 1, 1, 1));
+
+    mockMvc
+        .perform(
+            post("/bookings")
+                .header(USER_ID_HEADER, 1L)
+                .content(objectMapper.writeValueAsString(bookingRequestDto))
+                .contentType(MediaType.APPLICATION_JSON)
+                .characterEncoding(StandardCharsets.UTF_8)
+                .accept(MediaType.APPLICATION_JSON))
+        .andExpect(status().isBadRequest());
+
+    bookingRequestDto.setStart(null);
+    bookingRequestDto.setEnd(LocalDateTime.of(2025, 1, 1, 1, 1, 1));
 
     mockMvc
         .perform(
@@ -198,5 +226,22 @@ public class BookingControllerTest {
     mockMvc
         .perform(get("/bookings/owner").header(USER_ID_HEADER, userId).params(params))
         .andExpect(status().isOk());
+  }
+
+  @Test
+  public void getAllBookingsForOwnerShouldReturnBookingStateException() throws Exception {
+    doThrow(CustomException.BookingStateException.class)
+        .when(bookingService)
+        .getAllBookingsForOwnerOrBooker(anyLong(), anyString(), anyString(), anyInt(), anyInt());
+
+    MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+    params.add("state", "ALL");
+    params.add("from", "1");
+    params.add("size", "1");
+
+    int userId = 1;
+    mockMvc
+        .perform(get("/bookings/owner").header(USER_ID_HEADER, userId).params(params))
+        .andExpect(status().is5xxServerError());
   }
 }
