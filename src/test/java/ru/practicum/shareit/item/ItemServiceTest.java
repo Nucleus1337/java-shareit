@@ -50,7 +50,7 @@ public class ItemServiceTest {
   private User user;
   private Item item;
   private ItemRequest itemRequest;
-  private LocalDateTime now = LocalDateTime.now();
+  private final LocalDateTime now = LocalDateTime.now();
 
   private Booking booking;
   private Comment comment;
