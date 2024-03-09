@@ -19,7 +19,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @Builder
 @Entity
-@EqualsAndHashCode(of ={"id"})
+@EqualsAndHashCode(of = {"id"})
 @Table(name = "users")
 public class User {
   @Id
