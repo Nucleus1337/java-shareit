@@ -2,7 +2,6 @@ package ru.practicum.shareit.request;
 
 import static ru.practicum.shareit.request.ItemRequestMapper.toDto;
 import static ru.practicum.shareit.request.ItemRequestMapper.toModel;
-import static ru.practicum.shareit.utils.UtilsClass.getPageable;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -10,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.exception.CustomException;
 import ru.practicum.shareit.item.ItemMapper;
 import ru.practicum.shareit.item.ItemRepository;
@@ -25,6 +25,8 @@ public class ItemRequestService {
   private final ItemRepository itemRepository;
   private final ItemRequestRepository itemRequestRepository;
 
+  private final Sort newIsFirst = Sort.by("created");
+
   private User getUser(Long userId) {
     return userRepository
         .findById(userId)
@@ -34,6 +36,7 @@ public class ItemRequestService {
                     String.format("Пользователь с id = %s не найден", userId)));
   }
 
+  @Transactional
   public ItemRequestDto addRequest(ItemRequestDto itemRequestDto, Long userId) {
     User user = getUser(userId);
 
@@ -50,10 +53,10 @@ public class ItemRequestService {
         .collect(Collectors.toList());
   }
 
-  public List<ItemRequestDto> findAll(Long userId, Integer from, Integer size) {
+  public List<ItemRequestDto> findAll(Long userId, Pageable pageable) {
     User user = getUser(userId);
 
-    Pageable pageable = getPageable(from, size, Sort.by("created"));
+//    Pageable pageable = getPageable(from, size, newIsFirst);
 
     return itemRequestRepository.findAllByRequesterNot(user, pageable).stream()
         .map(request -> toDto(request, getItems(request)))

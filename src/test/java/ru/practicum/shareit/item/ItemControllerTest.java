@@ -4,7 +4,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -22,6 +21,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.util.LinkedMultiValueMap;
@@ -156,7 +156,7 @@ public class ItemControllerTest {
 
   @Test
   public void findAllByUserIdShouldReturnListOfItemPlusResponseDto() throws Exception {
-    when(itemService.findAllByUserId(anyLong(), nullable(Integer.class), nullable(Integer.class)))
+    when(itemService.findAllByUserId(anyLong(), any(Pageable.class)))
         .thenReturn(Collections.singletonList(itemPlusResponseDto));
 
     mockMvc
@@ -173,20 +173,11 @@ public class ItemControllerTest {
 
   @Test
   public void searchShouldReturnListOfItemDto() throws Exception {
-    //    MultiValueMap<String, String> params =
-    //        new LinkedMultiValueMap<>() {
-    //          {
-    //            add("text", "text");
-    //            add("from", "1");
-    //            add("size", "2");
-    //          }
-    //        };
-
     MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
     params.add("text", "text");
     params.add("from", "1");
     params.add("size", "2");
-    when(itemService.search(anyString(), nullable(Integer.class), nullable(Integer.class)))
+    when(itemService.search(anyString(), any(Pageable.class)))
         .thenReturn(Collections.singletonList(itemDtoOut));
 
     mockMvc
@@ -226,5 +217,20 @@ public class ItemControllerTest {
         .andExpect(jsonPath("$.id").value(1))
         .andExpect(jsonPath("$.authorName").value(commentResponseDto.getAuthorName()))
         .andExpect(jsonPath("$.text").value(commentResponseDto.getText()));
+  }
+
+  @Test
+  public void searchShouldReturnEmptyList() throws Exception {
+    MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+    params.add("text", "");
+    params.add("from", "1");
+    params.add("size", "2");
+    when(itemService.search(anyString(), any(Pageable.class)))
+            .thenReturn(Collections.singletonList(itemDtoOut));
+
+    mockMvc
+            .perform(get("/items/search").queryParams(params))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.length()").value(0));
   }
 }

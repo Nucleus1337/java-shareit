@@ -5,6 +5,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOf
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.when;
+import static ru.practicum.shareit.utils.UtilsClass.getPageable;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
@@ -19,6 +20,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Pageable;
 import ru.practicum.shareit.booking.dto.BookingRequestDto;
 import ru.practicum.shareit.booking.dto.BookingResponseDto;
+import ru.practicum.shareit.bookingState.BookingState;
 import ru.practicum.shareit.bookingStatus.BookingStatus;
 import ru.practicum.shareit.exception.CustomException;
 import ru.practicum.shareit.item.ItemRepository;
@@ -47,9 +49,11 @@ public class BookingServiceTest {
   private Item item;
   private Booking booking;
   private BookingRequestDto bookingRequestDto;
+  private Pageable pageable;
 
   @BeforeEach
   public void setUp() {
+    pageable = getPageable(0, 10);
     user = User.builder().id(1L).name("Timmy").email("timmy@email.com").build();
     otherUser = User.builder().id(2L).name("Gimmy").email("gimmy@email.com").build();
     itemRequest =
@@ -212,191 +216,111 @@ public class BookingServiceTest {
   }
 
   @Test
-  public void getAllBookingsForOwnerOrBookerShouldReturnBookingStateException() {
-    when(userRepository.findById(anyLong())).thenReturn(Optional.ofNullable(user));
-
-    long userId = 1;
-    String bookingState = "UNKNOWN";
-    String userType = "OWNER";
-    int from = 1;
-    int size = 1;
-
-    assertThatExceptionOfType(CustomException.BookingStateException.class)
-        .isThrownBy(
-            () ->
-                bookingService.getAllBookingsForOwnerOrBooker(
-                    userId, bookingState, userType, from, size));
-  }
-
-  @Test
-  public void getAllBookingsForOwnerOrBookerShouldReturnListOfResponseDto() {
-    when(userRepository.findById(anyLong())).thenReturn(Optional.ofNullable(user));
-    when(bookingRepository.findAllByOwnerId(anyLong(), any(Pageable.class)))
-        .thenReturn(Collections.singletonList(booking));
+  public void getAllBookingsForBookerStateAll() {
     when(bookingRepository.findByBookerOrderByStartDesc(any(User.class), any(Pageable.class)))
         .thenReturn(Collections.singletonList(booking));
+    when(userRepository.findById(anyLong())).thenReturn(Optional.ofNullable(user));
 
-    long userId = 1;
-    String bookingState = "ALL";
-    String userType = "OWNER";
-    int from = 1;
-    int size = 1;
+    List<BookingResponseDto> bookingResponseDtos =
+        bookingService.getAllBookingsForBooker(1L, BookingState.ALL, pageable);
 
-    List<BookingResponseDto> ownerFoundList =
-        bookingService.getAllBookingsForOwnerOrBooker(userId, bookingState, userType, from, size);
-
-    assertThat(ownerFoundList.size()).isGreaterThan(0);
-    assertThat(ownerFoundList.get(0).getBooker().getId()).isEqualTo(userId);
-
-    userType = "BOOKER";
-    List<BookingResponseDto> bookerFoundList =
-        bookingService.getAllBookingsForOwnerOrBooker(userId, bookingState, userType, from, size);
-
-    assertThat(bookerFoundList.size()).isGreaterThan(0);
-    assertThat(bookerFoundList.get(0).getBooker().getId()).isEqualTo(userId);
+    assertThat(bookingResponseDtos.size()).isGreaterThan(0);
   }
 
   @Test
-  public void getAllBookingsForOwnerOrBookerShouldReturnListOfCurrent() {
-    when(userRepository.findById(anyLong())).thenReturn(Optional.ofNullable(user));
+  public void getAllBookingsForOwnerStateAll() {
     when(bookingRepository.findAllByOwnerId(anyLong(), any(Pageable.class)))
         .thenReturn(Collections.singletonList(booking));
 
-    long userId = 1;
-    String bookingState = "CURRENT";
-    String userType = "OWNER";
-    int from = 1;
-    int size = 1;
+    List<BookingResponseDto> bookingResponseDtos =
+        bookingService.getAllBookingsForOwner(1L, BookingState.ALL, pageable);
 
-    booking.setStart(LocalDateTime.of(2020, 1, 1, 1, 1, 1));
-
-    List<BookingResponseDto> ownerFoundList =
-        bookingService.getAllBookingsForOwnerOrBooker(userId, bookingState, userType, from, size);
-
-    assertThat(ownerFoundList.size()).isGreaterThan(0);
-    assertThat(ownerFoundList.get(0).getBooker().getId()).isEqualTo(userId);
+    assertThat(bookingResponseDtos.size()).isGreaterThan(0);
   }
 
   @Test
-  public void getAllBookingsForOwnerOrBookerShouldReturnListOfCurrentButWrongStart() {
+  public void getAllBookingsForBookerShouldReturnException() {
+    when(bookingRepository.findByBookerOrderByStartDesc(any(User.class), any(Pageable.class)))
+        .thenReturn(Collections.emptyList());
     when(userRepository.findById(anyLong())).thenReturn(Optional.ofNullable(user));
-    when(bookingRepository.findAllByOwnerId(anyLong(), any(Pageable.class)))
-            .thenReturn(Collections.singletonList(booking));
 
-    long userId = 1;
-    String bookingState = "CURRENT";
-    String userType = "OWNER";
-    int from = 1;
-    int size = 1;
-
-    booking.setStart(LocalDateTime.of(2025, 1, 1, 1, 1, 1));
-
-    List<BookingResponseDto> ownerFoundList =
-            bookingService.getAllBookingsForOwnerOrBooker(userId, bookingState, userType, from, size);
-
-    assertThat(ownerFoundList.size()).isEqualTo(0);
+    assertThatExceptionOfType(CustomException.BookingNotFoundException.class)
+        .isThrownBy(() -> bookingService.getAllBookingsForBooker(1L, BookingState.ALL, pageable));
   }
 
   @Test
-  public void getAllBookingsForOwnerOrBookerShouldReturnListOfFuture() {
-    when(userRepository.findById(anyLong())).thenReturn(Optional.ofNullable(user));
-    when(bookingRepository.findAllByOwnerId(anyLong(), any(Pageable.class)))
-        .thenReturn(Collections.singletonList(booking));
-
-    long userId = 1;
-    String bookingState = "FUTURE";
-    String userType = "OWNER";
-    int from = 1;
-    int size = 1;
-
-    List<BookingResponseDto> ownerFoundList =
-        bookingService.getAllBookingsForOwnerOrBooker(userId, bookingState, userType, from, size);
-
-    assertThat(ownerFoundList.size()).isGreaterThan(0);
-    assertThat(ownerFoundList.get(0).getBooker().getId()).isEqualTo(userId);
-  }
-
-  @Test
-  public void getAllBookingsForOwnerOrBookerShouldReturnListOfPast() {
-    when(userRepository.findById(anyLong())).thenReturn(Optional.ofNullable(user));
-    when(bookingRepository.findAllByOwnerId(anyLong(), any(Pageable.class)))
-        .thenReturn(Collections.singletonList(booking));
-
-    long userId = 1;
-    String bookingState = "PAST";
-    String userType = "OWNER";
-    int from = 1;
-    int size = 1;
-
-    booking.setStart(LocalDateTime.of(2020, 1, 1, 1, 1));
-    booking.setEnd(LocalDateTime.of(2020, 1, 2, 1, 1));
-
-    List<BookingResponseDto> ownerFoundList =
-        bookingService.getAllBookingsForOwnerOrBooker(userId, bookingState, userType, from, size);
-
-    assertThat(ownerFoundList.size()).isGreaterThan(0);
-    assertThat(ownerFoundList.get(0).getBooker().getId()).isEqualTo(userId);
-  }
-
-  @Test
-  public void getAllBookingsForOwnerOrBookerShouldReturnListOfWaiting() {
-    when(userRepository.findById(anyLong())).thenReturn(Optional.ofNullable(user));
-    when(bookingRepository.findAllByOwnerId(anyLong(), any(Pageable.class)))
-        .thenReturn(Collections.singletonList(booking));
-
-    long userId = 1;
-    String bookingState = "WAITING";
-    String userType = "OWNER";
-    int from = 1;
-    int size = 1;
-    ;
-
-    List<BookingResponseDto> ownerFoundList =
-        bookingService.getAllBookingsForOwnerOrBooker(userId, bookingState, userType, from, size);
-
-    assertThat(ownerFoundList.size()).isGreaterThan(0);
-    assertThat(ownerFoundList.get(0).getBooker().getId()).isEqualTo(userId);
-  }
-
-  @Test
-  public void getAllBookingsForOwnerOrBookerShouldReturnListOfRejected() {
-    when(userRepository.findById(anyLong())).thenReturn(Optional.ofNullable(user));
-    when(bookingRepository.findAllByOwnerId(anyLong(), any(Pageable.class)))
-        .thenReturn(Collections.singletonList(booking));
-
-    long userId = 1;
-    String bookingState = "REJECTED";
-    String userType = "OWNER";
-    int from = 1;
-    int size = 1;
-
-    booking.setStatus(BookingStatus.REJECTED);
-
-    List<BookingResponseDto> ownerFoundList =
-        bookingService.getAllBookingsForOwnerOrBooker(userId, bookingState, userType, from, size);
-
-    assertThat(ownerFoundList.size()).isGreaterThan(0);
-    assertThat(ownerFoundList.get(0).getBooker().getId()).isEqualTo(userId);
-  }
-
-  @Test
-  public void getAllBookingsForOwnerOrBookerNoListException() {
-    when(userRepository.findById(anyLong())).thenReturn(Optional.ofNullable(user));
+  public void getAllBookingsForOwnerShouldReturnException() {
     when(bookingRepository.findAllByOwnerId(anyLong(), any(Pageable.class)))
         .thenReturn(Collections.emptyList());
 
-    long userId = 1;
-    String bookingState = "REJECTED";
-    String userType = "OWNER";
-    int from = 1;
-    int size = 1;
+    assertThatExceptionOfType(CustomException.BookingNotFoundException.class)
+        .isThrownBy(() -> bookingService.getAllBookingsForOwner(1L, BookingState.ALL, pageable));
+  }
+
+  @Test
+  public void getAllBookingsForBookerStateCurrent() {
+    when(bookingRepository.findByBookerOrderByStartDesc(any(User.class), any(Pageable.class)))
+        .thenReturn(Collections.singletonList(booking));
+    when(userRepository.findById(anyLong())).thenReturn(Optional.ofNullable(user));
+
+    booking.setStart(LocalDateTime.of(2020, 1, 1, 1, 1, 1));
+
+    List<BookingResponseDto> bookingResponseDtos =
+        bookingService.getAllBookingsForBooker(1L, BookingState.CURRENT, pageable);
+
+    assertThat(bookingResponseDtos.size()).isGreaterThan(0);
+  }
+
+  @Test
+  public void getAllBookingsForBookerStatePast() {
+    when(bookingRepository.findByBookerOrderByStartDesc(any(User.class), any(Pageable.class)))
+        .thenReturn(Collections.singletonList(booking));
+    when(userRepository.findById(anyLong())).thenReturn(Optional.ofNullable(user));
+
+    booking.setStart(LocalDateTime.of(2020, 1, 1, 1, 1, 1));
+    booking.setEnd(LocalDateTime.of(2020, 1, 2, 1, 1, 1));
+
+    List<BookingResponseDto> bookingResponseDtos =
+        bookingService.getAllBookingsForBooker(1L, BookingState.PAST, pageable);
+
+    assertThat(bookingResponseDtos.size()).isGreaterThan(0);
+  }
+
+  @Test
+  public void getAllBookingsForBookerStateFuture() {
+    when(bookingRepository.findByBookerOrderByStartDesc(any(User.class), any(Pageable.class)))
+        .thenReturn(Collections.singletonList(booking));
+    when(userRepository.findById(anyLong())).thenReturn(Optional.ofNullable(user));
+
+    List<BookingResponseDto> bookingResponseDtos =
+        bookingService.getAllBookingsForBooker(1L, BookingState.FUTURE, pageable);
+
+    assertThat(bookingResponseDtos.size()).isGreaterThan(0);
+  }
+
+  @Test
+  public void getAllBookingsForBookerStateRejected() {
+    when(bookingRepository.findByBookerOrderByStartDesc(any(User.class), any(Pageable.class)))
+        .thenReturn(Collections.singletonList(booking));
+    when(userRepository.findById(anyLong())).thenReturn(Optional.ofNullable(user));
 
     booking.setStatus(BookingStatus.REJECTED);
 
-    assertThatExceptionOfType(CustomException.BookingNotFoundException.class)
-        .isThrownBy(
-            () ->
-                bookingService.getAllBookingsForOwnerOrBooker(
-                    userId, bookingState, userType, from, size));
+    List<BookingResponseDto> bookingResponseDtos =
+        bookingService.getAllBookingsForBooker(1L, BookingState.REJECTED, pageable);
+
+    assertThat(bookingResponseDtos.size()).isGreaterThan(0);
+  }
+
+  @Test
+  public void getAllBookingsForBookerStateWaiting() {
+    when(bookingRepository.findByBookerOrderByStartDesc(any(User.class), any(Pageable.class)))
+        .thenReturn(Collections.singletonList(booking));
+    when(userRepository.findById(anyLong())).thenReturn(Optional.ofNullable(user));
+
+    List<BookingResponseDto> bookingResponseDtos =
+        bookingService.getAllBookingsForBooker(1L, BookingState.WAITING, pageable);
+
+    assertThat(bookingResponseDtos.size()).isGreaterThan(0);
   }
 }

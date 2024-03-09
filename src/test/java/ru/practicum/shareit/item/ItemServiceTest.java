@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
+import static ru.practicum.shareit.utils.UtilsClass.getPageable;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
@@ -51,6 +52,7 @@ public class ItemServiceTest {
   private Item item;
   private ItemRequest itemRequest;
   private final LocalDateTime now = LocalDateTime.now();
+  private Pageable pageable;
 
   private Booking booking;
   private Comment comment;
@@ -106,6 +108,8 @@ public class ItemServiceTest {
 
     comment = Comment.builder().id(1L).item(item).text("text").author(user).created(now).build();
     commentRequestDto = new CommentRequestDto("text");
+
+    pageable = getPageable(0, 10);
   }
 
   @Test
@@ -153,13 +157,9 @@ public class ItemServiceTest {
     when(itemRepository.findByOwner(any(User.class), any(Pageable.class)))
         .thenReturn(Collections.singletonList(item));
 
-    List<ItemPlusResponseDto> dtosWithPagination = itemService.findAllByUserId(1L, 1, 1);
+    List<ItemPlusResponseDto> dtosWithPagination = itemService.findAllByUserId(1L, pageable);
 
     assertThat(dtosWithPagination.size()).isEqualTo(1);
-
-    List<ItemPlusResponseDto> dtosWithoutPagination = itemService.findAllByUserId(1L, null, null);
-
-    assertThat(dtosWithoutPagination.size()).isEqualTo(1);
   }
 
   @Test
@@ -167,20 +167,9 @@ public class ItemServiceTest {
     when(itemRepository.search(anyString(), any(Pageable.class)))
         .thenReturn(Collections.singletonList(item));
 
-    List<ItemDto> dtosWithPagination = itemService.search("text", 1, 1);
+    List<ItemDto> dtosWithPagination = itemService.search("text", pageable);
 
     assertThat(dtosWithPagination.size()).isEqualTo(1);
-
-    List<ItemDto> dtosWithoutPagination = itemService.search("text", null, null);
-
-    assertThat(dtosWithoutPagination.size()).isEqualTo(1);
-  }
-
-  @Test
-  public void searchWithEmptySearchStringShouldReturnReturnEmptyList() {
-    List<ItemDto> dtosWithoutPagination = itemService.search("", null, null);
-
-    assertThat(dtosWithoutPagination.size()).isEqualTo(0);
   }
 
   @Test
@@ -212,12 +201,6 @@ public class ItemServiceTest {
     when(userRepository.findById(anyLong())).thenReturn(Optional.ofNullable(user));
     when(itemRepository.saveAndFlush(any(Item.class))).thenReturn(item);
 
-    //    Map<String, Object> params =
-    //        new HashMap<>() {
-    //          {
-    //            put("description", "text2");
-    //          }
-    //        };
     Map<String, Object> params = new HashMap<>();
     params.put("description", "text2");
 
@@ -233,13 +216,6 @@ public class ItemServiceTest {
 
     when(itemRepository.findById(anyLong())).thenReturn(Optional.ofNullable(item));
     when(userRepository.findById(anyLong())).thenReturn(Optional.ofNullable(otherUser));
-
-    //    Map<String, Object> params =
-    //        new HashMap<>() {
-    //          {
-    //            put("description", "text2");
-    //          }
-    //        };
 
     Map<String, Object> params = new HashMap<>();
     params.put("description", "text2");

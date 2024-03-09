@@ -1,13 +1,16 @@
 package ru.practicum.shareit.item;
 
+import static ru.practicum.shareit.utils.UtilsClass.getPageable;
+
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import javax.validation.Valid;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.PositiveOrZero;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Pageable;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -59,19 +62,28 @@ public class ItemController {
   @GetMapping
   public List<ItemPlusResponseDto> findAllByUserId(
       @RequestHeader(USER_ID_HEADER) Long userId,
-      @RequestParam(required = false) @PositiveOrZero Integer from,
-      @RequestParam(required = false) @Min(1) Integer size) {
+      @RequestParam(name = "from", defaultValue = "0") @PositiveOrZero Integer from,
+      @RequestParam(name = "size", defaultValue = "10") @Min(1) Integer size) {
     log.info("GET /items: userId={}, from={}, size={}", userId, from, size);
-    return itemService.findAllByUserId(userId, from, size);
+    Pageable pageable = getPageable(from, size);
+    return itemService.findAllByUserId(userId, pageable);
   }
 
   @GetMapping("/search")
   public List<ItemDto> search(
       @RequestParam String text,
-      @RequestParam(required = false) @PositiveOrZero Integer from,
-      @RequestParam(required = false) @Min(1) Integer size) {
+      @RequestParam(name = "from", defaultValue = "0") @PositiveOrZero Integer from,
+      @RequestParam(name = "size", defaultValue = "10") @Min(1) Integer size) {
     log.info("GET /items/search: test={}, from={}, size={}", text, from, size);
-    return itemService.search(text, from, size);
+
+    if (text.isEmpty() || text.isBlank()) {
+      log.error("Пустой запрос поиска");
+      return Collections.emptyList();
+    }
+
+    Pageable pageable = getPageable(from, size);
+
+    return itemService.search(text, pageable);
   }
 
   @PostMapping("/{itemId}/comment")

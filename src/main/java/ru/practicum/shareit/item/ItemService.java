@@ -1,6 +1,5 @@
 package ru.practicum.shareit.item;
 
-import static ru.practicum.shareit.utils.UtilsClass.getPageable;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -12,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ReflectionUtils;
 import ru.practicum.shareit.booking.Booking;
 import ru.practicum.shareit.booking.BookingRepository;
@@ -53,6 +53,7 @@ public class ItemService {
         .orElseThrow(() -> new CustomException.ItemNotFoundException("Вещь не найдена"));
   }
 
+  @Transactional
   public ItemDto create(Long userId, ItemDto itemDto) {
     log.info("Создадим новую вещь: {}; для пользователя с id = {}", itemDto, userId);
     User user = findUser(userId);
@@ -70,6 +71,7 @@ public class ItemService {
     return ItemMapper.toDto(itemToSave);
   }
 
+  @Transactional
   public ItemDto updateFields(Long userId, Long itemId, Map<String, Object> fields) {
     log.info("Обновим вещь с id = {} у пользователя с id = {}", userId, itemId);
     User user = findUser(userId);
@@ -102,12 +104,12 @@ public class ItemService {
     return ItemMapper.toResponsePlusDto(findItem(itemId), lastBooking, nextBooking, comments);
   }
 
-  public List<ItemPlusResponseDto> findAllByUserId(Long userId, Integer from, Integer size) {
+  public List<ItemPlusResponseDto> findAllByUserId(Long userId, Pageable pageable) {
     log.info("Найдем все вещи пользователя с id = {}", userId);
     List<ItemPlusResponseDto> itemsDto = new ArrayList<>();
     User user = findUser(userId);
 
-    Pageable pageable = getPageable(from, size);
+//    Pageable pageable = getPageable(from, size);
     itemRepository
         .findByOwner(user, pageable)
         .forEach(
@@ -125,13 +127,8 @@ public class ItemService {
     return itemsDto;
   }
 
-  public List<ItemDto> search(String text, Integer from, Integer size) {
+  public List<ItemDto> search(String text, Pageable pageable) {
     log.info("Найдем все вещи по строке запроса: {}", text);
-    if (text.isEmpty() || text.isBlank()) {
-      log.error("Пустой запрос поиска");
-      return new ArrayList<>();
-    }
-    Pageable pageable = getPageable(from, size);
     List<ItemDto> itemsDto =
         itemRepository.search(text, pageable).stream()
             .map(ItemMapper::toDto)
@@ -141,6 +138,7 @@ public class ItemService {
     return itemsDto;
   }
 
+  @Transactional
   public CommentResponseDto addComment(
       Long itemId, Long userId, CommentRequestDto commentRequestDto) {
     Item item =

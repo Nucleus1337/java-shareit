@@ -24,37 +24,22 @@ import ru.practicum.shareit.user.User;
 @NoArgsConstructor
 @Builder
 @Entity
-@EqualsAndHashCode
+@EqualsAndHashCode(of = {"id"})
 @Table(name = "items")
 public class Item {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @EqualsAndHashCode.Exclude private String name;
-  @EqualsAndHashCode.Exclude private String description;
-  @EqualsAndHashCode.Exclude private Boolean available;
+  private String name;
+  private String description;
+  private Boolean available;
 
   @ManyToOne(targetEntity = User.class, fetch = FetchType.LAZY)
   @JoinColumn(name = "owner_id")
-  @EqualsAndHashCode.Exclude
   private User owner;
 
   @ManyToOne(targetEntity = ItemRequest.class, fetch = FetchType.LAZY)
   @JoinColumn(name = "request_id")
-  @EqualsAndHashCode.Exclude
   private ItemRequest request;
-
-  //  @Override
-  //  public boolean equals(Object o) {
-  //    if (this == o) return true;
-  //    if (o == null || getClass() != o.getClass()) return false;
-  //    Item item = (Item) o;
-  //    return Objects.equals(id, item.id);
-  //  }
-  //
-  //  @Override
-  //  public int hashCode() {
-  //    return Objects.hash(id);
-  //  }
 }

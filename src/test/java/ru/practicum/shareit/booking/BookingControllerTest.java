@@ -2,10 +2,7 @@ package ru.practicum.shareit.booking;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -24,14 +21,15 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import ru.practicum.shareit.booking.dto.BookingRequestDto;
 import ru.practicum.shareit.booking.dto.BookingResponseDto;
+import ru.practicum.shareit.bookingState.BookingState;
 import ru.practicum.shareit.bookingStatus.BookingStatus;
-import ru.practicum.shareit.exception.CustomException;
 import ru.practicum.shareit.user.User;
 
 @WebMvcTest(BookingController.class)
@@ -177,19 +175,10 @@ public class BookingControllerTest {
   }
 
   @Test
-  public void getAllBookingsForBookerShouldReturnListOfDto() throws Exception {
-    when(bookingService.getAllBookingsForOwnerOrBooker(
-            anyLong(), anyString(), anyString(), anyInt(), anyInt()))
+  public void getAllBookingsForOwnerShouldReturnListOfDto() throws Exception {
+    when(bookingService.getAllBookingsForOwner(
+            anyLong(), any(BookingState.class), any(Pageable.class)))
         .thenReturn(Collections.singletonList(bookingResponseDto));
-
-    //    MultiValueMap<String, String> params =
-    //        new LinkedMultiValueMap<>() {
-    //          {
-    //            add("state", "ALL");
-    //            add("from", "1");
-    //            add("size", "1");
-    //          }
-    //        };
 
     MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
     params.add("state", "ALL");
@@ -203,19 +192,10 @@ public class BookingControllerTest {
   }
 
   @Test
-  public void getAllBookingsForOwnerShouldReturnListOfDto() throws Exception {
-    when(bookingService.getAllBookingsForOwnerOrBooker(
-            anyLong(), anyString(), anyString(), anyInt(), anyInt()))
+  public void getAllBookingsForBookerShouldReturnListOfDto() throws Exception {
+    when(bookingService.getAllBookingsForBooker(
+            anyLong(), any(BookingState.class), any(Pageable.class)))
         .thenReturn(Collections.singletonList(bookingResponseDto));
-
-    //    MultiValueMap<String, String> params =
-    //        new LinkedMultiValueMap<>() {
-    //          {
-    //            add("state", "ALL");
-    //            add("from", "1");
-    //            add("size", "1");
-    //          }
-    //        };
 
     MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
     params.add("state", "ALL");
@@ -229,19 +209,36 @@ public class BookingControllerTest {
   }
 
   @Test
-  public void getAllBookingsForOwnerShouldReturnBookingStateException() throws Exception {
-    doThrow(CustomException.BookingStateException.class)
-        .when(bookingService)
-        .getAllBookingsForOwnerOrBooker(anyLong(), anyString(), anyString(), anyInt(), anyInt());
+  public void getAllBookingsForOwnerShouldReturnException() throws Exception {
+    when(bookingService.getAllBookingsForOwner(
+            anyLong(), any(BookingState.class), any(Pageable.class)))
+            .thenReturn(Collections.singletonList(bookingResponseDto));
 
     MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-    params.add("state", "ALL");
+    params.add("state", "UNKNOWN");
     params.add("from", "1");
     params.add("size", "1");
 
     int userId = 1;
     mockMvc
-        .perform(get("/bookings/owner").header(USER_ID_HEADER, userId).params(params))
-        .andExpect(status().is5xxServerError());
+            .perform(get("/bookings").header(USER_ID_HEADER, userId).params(params))
+            .andExpect(status().is5xxServerError());
+  }
+
+  @Test
+  public void getAllBookingsForBookerShouldReturnException() throws Exception {
+    when(bookingService.getAllBookingsForBooker(
+            anyLong(), any(BookingState.class), any(Pageable.class)))
+            .thenReturn(Collections.singletonList(bookingResponseDto));
+
+    MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+    params.add("state", "UNKNOWN");
+    params.add("from", "1");
+    params.add("size", "1");
+
+    int userId = 1;
+    mockMvc
+            .perform(get("/bookings/owner").header(USER_ID_HEADER, userId).params(params))
+            .andExpect(status().is5xxServerError());
   }
 }

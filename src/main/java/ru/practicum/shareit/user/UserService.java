@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.exception.CustomException;
 import ru.practicum.shareit.user.dto.UserDto;
 
@@ -29,6 +30,7 @@ public class UserService {
     }
   }
 
+  @Transactional
   public UserDto create(UserDto userDto) {
     log.info("Создаем нового пользователяя {}", userDto);
     checkEmail(userDto.getEmail());
@@ -38,6 +40,7 @@ public class UserService {
     return UserMapper.toDto(user);
   }
 
+  @Transactional
   public UserDto update(UserDto userRequest, Long id) {
     log.info("Обновляем пользователя с id = {}", id);
     User user = getUserById(id);
@@ -65,6 +68,7 @@ public class UserService {
     return UserMapper.toDto(getUserById(id));
   }
 
+  @Transactional
   public void removeById(Long id) {
     log.info("Удаляем пользователя с id = {}", id);
     userRepository.deleteById(id);

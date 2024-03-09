@@ -1,11 +1,15 @@
 package ru.practicum.shareit.request;
 
+import static ru.practicum.shareit.utils.UtilsClass.getPageable;
+
 import java.util.List;
 import javax.validation.Valid;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.PositiveOrZero;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -25,6 +29,7 @@ import ru.practicum.shareit.request.dto.ItemRequestDto;
 @RequestMapping(path = "/requests")
 public class ItemRequestController {
   private static final String USER_ID_HEADER = "X-Sharer-User-Id";
+  private final Sort newIsFirst = Sort.by("created");
   private final ItemRequestService itemRequestService;
 
   @PostMapping
@@ -44,11 +49,13 @@ public class ItemRequestController {
   @GetMapping("/all")
   public List<ItemRequestDto> findAll(
       @RequestHeader(USER_ID_HEADER) Long userId,
-      @RequestParam(required = false, name = "from") @PositiveOrZero Integer from,
-      @RequestParam(required = false, name = "size") @Min(1) Integer size) {
+      @RequestParam(name = "from", defaultValue = "0") @PositiveOrZero Integer from,
+      @RequestParam(name = "size", defaultValue = "10") @Min(1) Integer size) {
     log.info("GET /requests/all: from={}, size={}", from, size);
 
-    return itemRequestService.findAll(userId, from, size);
+    Pageable pageable = getPageable(from, size, newIsFirst);
+
+    return itemRequestService.findAll(userId, pageable);
   }
 
   @GetMapping("/{requestId}")

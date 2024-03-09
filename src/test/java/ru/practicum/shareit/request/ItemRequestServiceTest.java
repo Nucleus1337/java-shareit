@@ -25,6 +25,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.when;
+import static ru.practicum.shareit.utils.UtilsClass.getPageable;
 
 @ExtendWith(MockitoExtension.class)
 public class ItemRequestServiceTest {
@@ -44,10 +45,12 @@ public class ItemRequestServiceTest {
   private ItemDto otherItemDto;
   private Item item;
   private Item otherItem;
+  private Pageable pageable;
 
   @BeforeEach
   public void setUp() {
     LocalDateTime dateTime = LocalDateTime.of(2020, 1, 1, 1, 1, 1);
+    pageable = getPageable(0, 10);
 
     user = User.builder().id(1L).name("Timmy").email("timmy@email.com").build();
     otherUser = User.builder().id(2L).name("Gimmy").email("gimmy@email.com").build();
@@ -139,7 +142,7 @@ public class ItemRequestServiceTest {
         .thenReturn(Collections.singletonList(otherItemRequest));
     when(itemRepository.findByRequest(any(ItemRequest.class))).thenReturn(Collections.singletonList(otherItem));
 
-    List<ItemRequestDto> foundItemRequestDtos = itemRequestService.findAll(1L, 1, 1);
+    List<ItemRequestDto> foundItemRequestDtos = itemRequestService.findAll(1L, pageable);
 
     assertThat(foundItemRequestDtos.size()).isEqualTo(1);
     assertThat(foundItemRequestDtos.get(0).getId()).isEqualTo(2);
