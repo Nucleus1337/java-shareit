@@ -7,12 +7,6 @@ public class CustomException {
     }
   }
 
-  public static class EmailException extends UserException {
-    public EmailException(String message) {
-      super(message);
-    }
-  }
-
   public static class UserNotFoundException extends UserException {
     public UserNotFoundException(String message) {
       super(message);
@@ -37,12 +31,6 @@ public class CustomException {
     }
   }
 
-  public static class BookingDateTimeException extends RuntimeException {
-    public BookingDateTimeException(String message) {
-      super(message);
-    }
-  }
-
   public static class BookingNotFoundException extends RuntimeException {
     public BookingNotFoundException(String message) {
       super(message);
@@ -57,6 +45,12 @@ public class CustomException {
 
   public static class BookingStateException extends RuntimeException {
     public BookingStateException(String message) {
+      super(message);
+    }
+  }
+
+  public static class ItemRequestNotFoundException extends RuntimeException {
+    public ItemRequestNotFoundException(String message) {
       super(message);
     }
   }

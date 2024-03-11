@@ -1,7 +1,6 @@
 package ru.practicum.shareit.comment;
 
 import java.time.LocalDateTime;
-import java.util.Objects;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
@@ -12,6 +11,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -24,6 +24,7 @@ import ru.practicum.shareit.user.User;
 @NoArgsConstructor
 @Builder
 @Entity
+@EqualsAndHashCode(of = {"id"})
 @Table(name = "comments")
 public class Comment {
   @Id
@@ -41,17 +42,4 @@ public class Comment {
   private User author;
 
   private LocalDateTime created;
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    Comment comment = (Comment) o;
-    return Objects.equals(id, comment.id);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(id);
-  }
 }

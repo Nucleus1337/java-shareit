@@ -1,5 +1,6 @@
 package ru.practicum.shareit.item;
 
+
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -8,7 +9,9 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ReflectionUtils;
 import ru.practicum.shareit.booking.Booking;
 import ru.practicum.shareit.booking.BookingRepository;
@@ -21,6 +24,8 @@ import ru.practicum.shareit.exception.CustomException;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.dto.ItemPlusResponseDto;
 import ru.practicum.shareit.item.model.Item;
+import ru.practicum.shareit.request.ItemRequest;
+import ru.practicum.shareit.request.ItemRequestRepository;
 import ru.practicum.shareit.user.User;
 import ru.practicum.shareit.user.UserRepository;
 
@@ -32,6 +37,7 @@ public class ItemService {
   private final ItemRepository itemRepository;
   private final BookingRepository bookingRepository;
   private final CommentRepository commentRepository;
+  private final ItemRequestRepository itemRequestRepository;
 
   private User findUser(Long userId) {
     log.info("Найдем пользователя с id = {}", userId);
@@ -47,14 +53,25 @@ public class ItemService {
         .orElseThrow(() -> new CustomException.ItemNotFoundException("Вещь не найдена"));
   }
 
+  @Transactional
   public ItemDto create(Long userId, ItemDto itemDto) {
     log.info("Создадим новую вещь: {}; для пользователя с id = {}", itemDto, userId);
     User user = findUser(userId);
-    Item item = ItemMapper.toModel(itemDto, user);
+    Item item;
 
-    return ItemMapper.toDto(itemRepository.saveAndFlush(item));
+    if (itemDto.getRequestId() != null) {
+      ItemRequest itemRequest = itemRequestRepository.findById(itemDto.getRequestId()).orElse(null);
+      item = ItemMapper.toModel(itemDto, user, itemRequest);
+    } else {
+      item = ItemMapper.toModel(itemDto, user);
+    }
+
+    Item itemToSave = itemRepository.saveAndFlush(item);
+
+    return ItemMapper.toDto(itemToSave);
   }
 
+  @Transactional
   public ItemDto updateFields(Long userId, Long itemId, Map<String, Object> fields) {
     log.info("Обновим вещь с id = {} у пользователя с id = {}", userId, itemId);
     User user = findUser(userId);
@@ -87,11 +104,14 @@ public class ItemService {
     return ItemMapper.toResponsePlusDto(findItem(itemId), lastBooking, nextBooking, comments);
   }
 
-  public List<ItemPlusResponseDto> findAllByUserId(Long userId) {
+  public List<ItemPlusResponseDto> findAllByUserId(Long userId, Pageable pageable) {
     log.info("Найдем все вещи пользователя с id = {}", userId);
     List<ItemPlusResponseDto> itemsDto = new ArrayList<>();
-    itemRepository.findAll().stream()
-        .filter(item -> item.getOwner().getId().equals(userId))
+    User user = findUser(userId);
+
+//    Pageable pageable = getPageable(from, size);
+    itemRepository
+        .findByOwner(user, pageable)
         .forEach(
             item -> {
               Booking next = bookingRepository.findNextBookingAfterNow(item.getId(), userId);
@@ -107,20 +127,18 @@ public class ItemService {
     return itemsDto;
   }
 
-  public List<ItemDto> search(String text) {
+  public List<ItemDto> search(String text, Pageable pageable) {
     log.info("Найдем все вещи по строке запроса: {}", text);
-    if (text.isEmpty() || text.isBlank()) {
-      log.error("Пустой запрос поиска");
-      return new ArrayList<>();
-    }
-
     List<ItemDto> itemsDto =
-        itemRepository.search(text).stream().map(ItemMapper::toDto).collect(Collectors.toList());
+        itemRepository.search(text, pageable).stream()
+            .map(ItemMapper::toDto)
+            .collect(Collectors.toList());
 
     log.info("Всего найдено вещей: {}", itemsDto.size());
     return itemsDto;
   }
 
+  @Transactional
   public CommentResponseDto addComment(
       Long itemId, Long userId, CommentRequestDto commentRequestDto) {
     Item item =

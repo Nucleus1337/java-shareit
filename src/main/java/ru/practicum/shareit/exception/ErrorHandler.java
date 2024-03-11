@@ -15,12 +15,12 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 public class ErrorHandler {
 
   @ExceptionHandler({
-    CustomException.EmailException.class,
+//    CustomException.EmailException.class,
     MethodArgumentNotValidException.class,
     ConstraintViolationException.class,
     DataIntegrityViolationException.class,
     CustomException.ItemNotAvailableException.class,
-    CustomException.BookingDateTimeException.class,
+//    CustomException.BookingDateTimeException.class,
     CustomException.BookingStatusException.class
   })
   @ResponseStatus(HttpStatus.BAD_REQUEST)
@@ -33,7 +33,8 @@ public class ErrorHandler {
   @ExceptionHandler({
     CustomException.UserNotFoundException.class,
     CustomException.ItemNotFoundException.class,
-    CustomException.BookingNotFoundException.class
+    CustomException.BookingNotFoundException.class,
+    CustomException.ItemRequestNotFoundException.class
   })
   @ResponseStatus(HttpStatus.NOT_FOUND)
   @ResponseBody

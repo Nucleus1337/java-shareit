@@ -6,6 +6,7 @@ import ru.practicum.shareit.comment.Comment;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.dto.ItemPlusResponseDto;
 import ru.practicum.shareit.item.model.Item;
+import ru.practicum.shareit.request.ItemRequest;
 import ru.practicum.shareit.user.User;
 
 import java.util.ArrayList;
@@ -19,16 +20,27 @@ public class ItemMapper {
         .name(item.getName())
         .description(item.getDescription())
         .available(item.getAvailable())
+        .requestId(item.getRequest() == null ? null : item.getRequest().getId())
         .build();
   }
 
-  public static Item toModel(ItemDto itemDto, User user) {
+  public static Item toModel(ItemDto itemDto, User user, ItemRequest itemRequest) {
     return Item.builder()
         .name(itemDto.getName())
         .description(itemDto.getDescription())
         .available(itemDto.getAvailable())
         .owner(user)
+        .request(itemRequest)
         .build();
+  }
+
+  public static Item toModel(ItemDto itemDto, User user) {
+    return Item.builder()
+            .name(itemDto.getName())
+            .description(itemDto.getDescription())
+            .available(itemDto.getAvailable())
+            .owner(user)
+            .build();
   }
 
   public static ItemPlusResponseDto toResponsePlusDto(

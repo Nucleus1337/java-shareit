@@ -1,6 +1,5 @@
 package ru.practicum.shareit.item.model;
 
-import java.util.Objects;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
@@ -11,6 +10,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -24,6 +24,7 @@ import ru.practicum.shareit.user.User;
 @NoArgsConstructor
 @Builder
 @Entity
+@EqualsAndHashCode(of = {"id"})
 @Table(name = "items")
 public class Item {
   @Id
@@ -41,17 +42,4 @@ public class Item {
   @ManyToOne(targetEntity = ItemRequest.class, fetch = FetchType.LAZY)
   @JoinColumn(name = "request_id")
   private ItemRequest request;
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    Item item = (Item) o;
-    return Objects.equals(id, item.id);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(id);
-  }
 }

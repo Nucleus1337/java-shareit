@@ -7,11 +7,10 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
-import java.util.Objects;
 
 /** TODO Sprint add-controllers. */
 @Getter
@@ -20,6 +19,7 @@ import java.util.Objects;
 @NoArgsConstructor
 @Builder
 @Entity
+@EqualsAndHashCode(of = {"id"})
 @Table(name = "users")
 public class User {
   @Id
@@ -28,17 +28,4 @@ public class User {
 
   private String name;
   private String email;
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    User user = (User) o;
-    return Objects.equals(id, user.id);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(id);
-  }
 }
