@@ -2,7 +2,6 @@ package ru.practicum.shareit.item;
 
 import static ru.practicum.shareit.utils.UtilsClass.getRestTemplate;
 
-import java.util.HashMap;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
@@ -33,25 +32,14 @@ public class ItemClient extends BaseClient {
   }
 
   public ResponseEntity<Object> findAllByUserId(Long userId, Integer from, Integer size) {
-    Map<String, Object> patameters =
-        new HashMap<>() {
-          {
-            put("from", from);
-            put("size", size);
-          }
-        };
-    return get("?from={from}&size={size}", userId, patameters);
+    Map<String, Object> parameters = Map.of("from", from, "size", size);
+
+    return get("?from={from}&size={size}", userId, parameters);
   }
 
   public ResponseEntity<Object> search(String text, Integer from, Integer size) {
-    Map<String, Object> patameters =
-        new HashMap<>() {
-          {
-            put("text", text);
-            put("from", from);
-            put("size", size);
-          }
-        };
+    Map<String, Object> patameters = Map.of("text", text, "from", from, "size", size);
+
     return get("/search?text={text}&from={from}&size={size}", null, patameters);
   }
 
