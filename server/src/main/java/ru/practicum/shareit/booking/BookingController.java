@@ -4,9 +4,6 @@ import static ru.practicum.shareit.utils.UtilsClass.getPageable;
 
 import java.util.Arrays;
 import java.util.List;
-import javax.validation.Valid;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.PositiveOrZero;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
@@ -24,7 +21,6 @@ import ru.practicum.shareit.booking.dto.BookingRequestDto;
 import ru.practicum.shareit.booking.dto.BookingResponseDto;
 import ru.practicum.shareit.bookingState.BookingState;
 import ru.practicum.shareit.exception.CustomException;
-import ru.practicum.shareit.groups.Group;
 
 /** TODO Sprint add-bookings. */
 @RestController
@@ -37,10 +33,9 @@ public class BookingController {
   private final BookingService bookingService;
 
   @PostMapping
-  @Validated({Group.OnInsert.class})
   public BookingResponseDto create(
       @RequestHeader(USER_ID_HEADER) Long userId,
-      @RequestBody @Valid BookingRequestDto bookingRequestDto) {
+      @RequestBody BookingRequestDto bookingRequestDto) {
     log.info("POST /bookings: userId={}, bookingRequestDto={}", userId, bookingRequestDto);
     return bookingService.create(userId, bookingRequestDto);
   }
@@ -69,8 +64,8 @@ public class BookingController {
   public List<BookingResponseDto> getAllBookingsForBooker(
       @RequestHeader(USER_ID_HEADER) Long userId,
       @RequestParam(name = "state", defaultValue = "ALL") String state,
-      @RequestParam(name = "from", defaultValue = "0") @PositiveOrZero Integer from,
-      @RequestParam(name = "size", defaultValue = "10") @Min(1) Integer size) {
+      @RequestParam(name = "from", defaultValue = "0") Integer from,
+      @RequestParam(name = "size", defaultValue = "10") Integer size) {
     log.info("GET /bookings: userId={}, state={}, from={}, size={}", userId, state, from, size);
 
     Pageable pageable = getPageable(from, size);
@@ -90,8 +85,8 @@ public class BookingController {
   public List<BookingResponseDto> getAllBookingsForOwner(
       @RequestHeader(USER_ID_HEADER) Long userId,
       @RequestParam(name = "state", defaultValue = "ALL") String state,
-      @RequestParam(name = "from", defaultValue = "0") @PositiveOrZero Integer from,
-      @RequestParam(name = "size", defaultValue = "10") @Min(1) Integer size) {
+      @RequestParam(name = "from", defaultValue = "0") Integer from,
+      @RequestParam(name = "size", defaultValue = "10") Integer size) {
     log.info(
         "GET /bookings/owner: userId={}, state={}, from={}, size={}", userId, state, from, size);
 

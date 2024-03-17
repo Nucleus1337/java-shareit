@@ -3,9 +3,6 @@ package ru.practicum.shareit.request;
 import static ru.practicum.shareit.utils.UtilsClass.getPageable;
 
 import java.util.List;
-import javax.validation.Valid;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.PositiveOrZero;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
@@ -35,7 +32,7 @@ public class ItemRequestController {
   @PostMapping
   public ItemRequestDto addRequest(
       @RequestHeader(USER_ID_HEADER) Long userId,
-      @RequestBody @Valid ItemRequestDto itemRequestDto) {
+      @RequestBody ItemRequestDto itemRequestDto) {
     log.info("POST /requests: userId={}, itemRequestDto={}", userId, itemRequestDto);
     return itemRequestService.addRequest(itemRequestDto, userId);
   }
@@ -49,8 +46,8 @@ public class ItemRequestController {
   @GetMapping("/all")
   public List<ItemRequestDto> findAll(
       @RequestHeader(USER_ID_HEADER) Long userId,
-      @RequestParam(name = "from", defaultValue = "0") @PositiveOrZero Integer from,
-      @RequestParam(name = "size", defaultValue = "10") @Min(1) Integer size) {
+      @RequestParam(name = "from", defaultValue = "0") Integer from,
+      @RequestParam(name = "size", defaultValue = "10") Integer size) {
     log.info("GET /requests/all: from={}, size={}", from, size);
 
     Pageable pageable = getPageable(from, size, newIsFirst);

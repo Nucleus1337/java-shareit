@@ -5,9 +5,6 @@ import static ru.practicum.shareit.utils.UtilsClass.getPageable;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import javax.validation.Valid;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.PositiveOrZero;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
@@ -38,7 +35,7 @@ public class ItemController {
 
   @PostMapping
   public ItemDto create(
-      @RequestHeader(USER_ID_HEADER) Long userId, @RequestBody @Valid ItemDto itemDto) {
+      @RequestHeader(USER_ID_HEADER) Long userId, @RequestBody ItemDto itemDto) {
     log.info("POST /items: userId={}, itemDto={}", userId, itemDto);
     return itemService.create(userId, itemDto);
   }
@@ -62,8 +59,8 @@ public class ItemController {
   @GetMapping
   public List<ItemPlusResponseDto> findAllByUserId(
       @RequestHeader(USER_ID_HEADER) Long userId,
-      @RequestParam(name = "from", defaultValue = "0") @PositiveOrZero Integer from,
-      @RequestParam(name = "size", defaultValue = "10") @Min(1) Integer size) {
+      @RequestParam(name = "from", defaultValue = "0") Integer from,
+      @RequestParam(name = "size", defaultValue = "10") Integer size) {
     log.info("GET /items: userId={}, from={}, size={}", userId, from, size);
     Pageable pageable = getPageable(from, size);
     return itemService.findAllByUserId(userId, pageable);
@@ -72,8 +69,8 @@ public class ItemController {
   @GetMapping("/search")
   public List<ItemDto> search(
       @RequestParam String text,
-      @RequestParam(name = "from", defaultValue = "0") @PositiveOrZero Integer from,
-      @RequestParam(name = "size", defaultValue = "10") @Min(1) Integer size) {
+      @RequestParam(name = "from", defaultValue = "0") Integer from,
+      @RequestParam(name = "size", defaultValue = "10") Integer size) {
     log.info("GET /items/search: test={}, from={}, size={}", text, from, size);
 
     if (text.isEmpty() || text.isBlank()) {
@@ -90,7 +87,7 @@ public class ItemController {
   public CommentResponseDto addComment(
       @PathVariable Long itemId,
       @RequestHeader(USER_ID_HEADER) Long userId,
-      @RequestBody @Valid CommentRequestDto commentRequestDto) {
+      @RequestBody CommentRequestDto commentRequestDto) {
     log.info(
         "POST /items/{itemId}/comment: itemId={}, userId={}, commentRequestDto={}",
         itemId,
