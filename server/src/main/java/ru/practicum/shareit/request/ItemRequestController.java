@@ -7,7 +7,6 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -22,7 +21,6 @@ import ru.practicum.shareit.request.dto.ItemRequestDto;
 @RestController
 @AllArgsConstructor
 @Slf4j
-@Validated
 @RequestMapping(path = "/requests")
 public class ItemRequestController {
   private static final String USER_ID_HEADER = "X-Sharer-User-Id";

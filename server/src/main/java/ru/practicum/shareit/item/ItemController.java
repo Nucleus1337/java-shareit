@@ -8,7 +8,6 @@ import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -23,12 +22,10 @@ import ru.practicum.shareit.comment.dto.CommentResponseDto;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.dto.ItemPlusResponseDto;
 
-/** TODO Sprint add-controllers. */
 @RestController
 @RequestMapping("/items")
 @RequiredArgsConstructor
 @Slf4j
-@Validated
 public class ItemController {
   private static final String USER_ID_HEADER = "X-Sharer-User-Id";
   private final ItemService itemService;

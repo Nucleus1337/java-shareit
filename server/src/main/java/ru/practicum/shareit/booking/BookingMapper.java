@@ -1,9 +1,9 @@
 package ru.practicum.shareit.booking;
 
 import lombok.experimental.UtilityClass;
+import ru.practicum.shareit.booking.bookingStatus.BookingStatus;
 import ru.practicum.shareit.booking.dto.BookingRequestDto;
 import ru.practicum.shareit.booking.dto.BookingResponseDto;
-import ru.practicum.shareit.bookingStatus.BookingStatus;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.User;
 
